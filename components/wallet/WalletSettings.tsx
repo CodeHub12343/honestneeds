@@ -16,7 +16,7 @@ import { Plus, Trash2, CheckCircle, Clock, AlertCircle, Bell, Lock } from 'lucid
 //   useNotificationPreferences,
 //   useUpdateNotificationPreferences
 // } from '@/api/hooks/useWallet'
-import Button from '@/components/Button'
+import { Button } from '@/components/Button'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 
 const Container = styled.div`

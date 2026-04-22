@@ -406,7 +406,7 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({ hideBalance = 
         <StatCard>
           <Stat IconWrapper>
             <TrendingUp />
-          </Stat IconWrapper>
+          </StatIconWrapper>
           <StatLabel>This Month</StatLabel>
           <StatValue>{overview ? formatCurrency(overview.pending_withdrawal_amount) : '$0.00'}</StatValue>
           <StatSubtext>Pending payout</StatSubtext>

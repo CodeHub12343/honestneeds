@@ -7,7 +7,7 @@ const TabsWrapper = styled.div`
   width: 100%;
 `;
 
-const TabsList = styled.div`
+const TabsListStyled = styled.div`
   display: flex;
   border-bottom: 2px solid #e2e8f0;
   gap: 1rem;
@@ -68,7 +68,7 @@ export function Tabs({ defaultValue = '', children }: TabsProps) {
 }
 
 export function TabsList({ children }: { children: React.ReactNode }) {
-  return <TabsList>{children}</TabsList>;
+  return <TabsListStyled>{children}</TabsListStyled>;
 }
 
 export function TabsTrigger({ value, children }: TabsTriggerProps) {
