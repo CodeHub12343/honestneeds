@@ -162,9 +162,9 @@ export const useRecordShareWithEarnings = () => {
     {
       onSuccess: (data, variables) => {
         // Invalidate earnings-related queries
-        queryClient.invalidateQueries(['shareEarnings', variables.campaignId])
-        queryClient.invalidateQueries(['shareEarningPotential', variables.campaignId])
-        queryClient.invalidateQueries(['shareLeaderboard', variables.campaignId])
+        queryClient.invalidateQueries({ queryKey: ['shareEarnings', variables.campaignId] })
+        queryClient.invalidateQueries({ queryKey: ['shareEarningPotential', variables.campaignId] })
+        queryClient.invalidateQueries({ queryKey: ['shareLeaderboard', variables.campaignId] })
       },
     }
   )
@@ -198,8 +198,8 @@ export const useRequestSharePayout = () => {
     },
     {
       onSuccess: (data, variables) => {
-        queryClient.invalidateQueries(['shareEarnings', variables.campaignId])
-        queryClient.invalidateQueries(['sharesWallet'])
+        queryClient.invalidateQueries({ queryKey: ['shareEarnings', variables.campaignId] })
+        queryClient.invalidateQueries({ queryKey: ['sharesWallet'] })
       },
     }
   )

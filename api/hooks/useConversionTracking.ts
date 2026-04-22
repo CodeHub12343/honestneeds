@@ -231,8 +231,8 @@ export function useConversionFlow() {
 
         if (result.success && result.conversion_recorded) {
           // Success - refresh all related data
-          await queryClient.invalidateQueries(['supporter', 'shares']);
-          await queryClient.invalidateQueries(['campaign', params.campaignId]);
+          await queryClient.invalidateQueries({ queryKey: ['supporter', 'shares'] });
+          await queryClient.invalidateQueries({ queryKey: ['campaign', params.campaignId] });
           
           return {
             success: true,
