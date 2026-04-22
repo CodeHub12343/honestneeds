@@ -57,8 +57,8 @@ export const useCampaignStatusNotifications = (
         }
 
         // Invalidate related queries
-        queryClient.invalidateQueries(['campaign', campaignId])
-        queryClient.invalidateQueries(['campaigns'])
+        queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] })
+        queryClient.invalidateQueries({ queryKey: ['campaigns'] })
       }
 
       previousStatusRef.current = currentStatus
