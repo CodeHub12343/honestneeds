@@ -4,7 +4,7 @@
  * Real-time WebSocket integration with React Query
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, QueryFunctionContext } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 import axios from 'axios';
 
@@ -31,7 +31,8 @@ export const usePrayerNotifications = (userId: string) => {
   // Query: Get notifications feed
   const notificationsQuery = useQuery({
     queryKey: ['prayer', 'notifications', 'feed', userId],
-    queryFn: async ({ pageParam = { limit: 20, offset: 0 } }: { pageParam?: { limit: number; offset: number } }) => {
+    queryFn: async (context: QueryFunctionContext<string[], { limit: number; offset: number }>) => {
+      const pageParam = context.pageParam || { limit: 20, offset: 0 };
       const { data } = await axios.get(`${API_BASE}/prayers/notifications`, {
         params: {
           limit: pageParam.limit,
