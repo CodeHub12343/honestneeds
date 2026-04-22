@@ -31,7 +31,7 @@ export const usePrayerNotifications = (userId: string) => {
   // Query: Get notifications feed
   const notificationsQuery = useQuery({
     queryKey: ['prayer', 'notifications', 'feed', userId],
-    queryFn: async ({ pageParam = { limit: 20, offset: 0 } }) => {
+    queryFn: async ({ pageParam = { limit: 20, offset: 0 } }: { pageParam?: { limit: number; offset: number } }) => {
       const { data } = await axios.get(`${API_BASE}/prayers/notifications`, {
         params: {
           limit: pageParam.limit,
