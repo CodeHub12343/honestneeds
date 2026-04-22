@@ -14,7 +14,7 @@ import axios from 'axios'
  * @param {string} referralCode - Referral code from share record
  * @returns {Object} - Referral URL utilities and state
  */
-export const useReferralUrl = (campaignId, referralCode) => {
+export const useReferralUrl = (campaignId: string, referralCode: string) => {
   const [generatedUrl, setGeneratedUrl] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
