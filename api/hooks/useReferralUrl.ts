@@ -21,7 +21,7 @@ export const useReferralUrl = (campaignId: string, referralCode: string) => {
 
   // Generate referral URL
   const generateUrl = useCallback(
-    async (platform) => {
+    async (platform: string) => {
       if (!campaignId || !referralCode) {
         setError('Missing campaign ID or referral code')
         return null
@@ -56,7 +56,7 @@ export const useReferralUrl = (campaignId: string, referralCode: string) => {
   )
 
   // Validate referral URL
-  const validateUrl = useCallback(async (url) => {
+  const validateUrl = useCallback(async (url: string) => {
     try {
       const response = await axios.post('/api/referral/validate-url', {
         url,
@@ -71,7 +71,7 @@ export const useReferralUrl = (campaignId: string, referralCode: string) => {
   }, [referralCode])
 
   // Copy to clipboard helper
-  const copyToClipboard = useCallback(async (url) => {
+  const copyToClipboard = useCallback(async (url: string) => {
     if (!url) return false
 
     try {
@@ -93,7 +93,7 @@ export const useReferralUrl = (campaignId: string, referralCode: string) => {
   }, [validateUrl])
 
   // Get short URL (if available)
-  const getShortUrl = useCallback((url) => {
+  const getShortUrl = useCallback((url: string) => {
     // For now, just truncate if very long
     if (url && url.length > 80) {
       return url.substring(0, 77) + '...'
