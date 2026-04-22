@@ -43,7 +43,7 @@ export const useReferralUrl = (campaignId: string, referralCode: string) => {
         } else {
           throw new Error(response.data.message || 'Failed to generate URL')
         }
-      } catch (err) {
+      } catch (err: any) {
         const message = err.response?.data?.message || err.message
         setError(message)
         console.error('Error generating referral URL:', message)
@@ -64,7 +64,7 @@ export const useReferralUrl = (campaignId: string, referralCode: string) => {
       })
 
       return response.data.isValid
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error validating URL:', err)
       return false
     }
@@ -85,7 +85,7 @@ export const useReferralUrl = (campaignId: string, referralCode: string) => {
       // Copy to clipboard
       await navigator.clipboard.writeText(url)
       return true
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error copying to clipboard:', err)
       setError('Failed to copy URL')
       return false
@@ -138,7 +138,7 @@ export const useRecordReferralClick = (campaignId, referralCode, options = {}) =
           setRecorded(true)
           console.log('Referral click recorded:', response.data)
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error recording referral click:', err)
         setError(err.message)
         // Don't block user experience if tracking fails
