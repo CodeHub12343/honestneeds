@@ -12,8 +12,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export const usePrayerNotifications = (userId: string) => {
   const queryClient = useQueryClient();
-  const wsRef = useRef(null);
-  const reconnectTimeoutRef = useRef(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Query: Get notification preferences
   const preferencesQuery = useQuery({
