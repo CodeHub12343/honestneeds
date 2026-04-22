@@ -103,12 +103,12 @@ export function useMyShareAnalytics(page: number = 1, limit: number = 25) {
 
   return {
     shares: shares.data,
-    sharesLoading: shares.isLoading,
+    sharesLoading: shares.isPending,
     sharesError: shares.error,
     performance: performance.data,
-    performanceLoading: performance.isLoading,
+    performanceLoading: performance.isPending,
     performanceError: performance.error,
-    isLoading: shares.isLoading || performance.isLoading,
+    isLoading: shares.isPending || performance.isPending,
     refetch: () => {
       shares.refetch()
       performance.refetch()

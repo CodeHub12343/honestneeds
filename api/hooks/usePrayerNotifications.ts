@@ -203,16 +203,16 @@ export const usePrayerNotifications = (userId) => {
   return {
     // Queries
     preferences: preferencesQuery.data,
-    preferencesLoading: preferencesQuery.isLoading,
+    preferencesLoading: preferencesQuery.isPending,
     preferencesError: preferencesQuery.error,
 
     notifications: notificationsQuery.data?.data || [],
-    notificationsLoading: notificationsQuery.isLoading,
+    notificationsLoading: notificationsQuery.isPending,
     notificationsError: notificationsQuery.error,
     totalNotifications: notificationsQuery.data?.pagination?.total || 0,
 
     unreadCount: unreadCountQuery.data || 0,
-    unreadCountLoading: unreadCountQuery.isLoading,
+    unreadCountLoading: unreadCountQuery.isPending,
 
     // Mutations
     updatePreferences: updatePreferencesMutation.mutate,

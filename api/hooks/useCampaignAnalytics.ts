@@ -360,7 +360,7 @@ export function useCombinedAnalytics(
     trends,
     predictions,
     cohorts,
-    isLoading: timeSeries.isLoading || trends.isLoading,
+    isLoading: timeSeries.isPending || trends.isPending,
     isError: timeSeries.isError || trends.isError,
     error: timeSeries.error || trends.error,
   };

@@ -256,7 +256,7 @@ export function useConversionFlow() {
         };
       }
     },
-    isLoading: recordMutation.isLoading,
+    isLoading: recordMutation.isPending,
     isError: recordMutation.isError,
     error: recordMutation.error,
   };
