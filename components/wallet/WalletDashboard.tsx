@@ -404,7 +404,7 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({ hideBalance = 
       {/* Stats Grid */}
       <Grid>
         <StatCard>
-          <Stat IconWrapper>
+          <StatIconWrapper>
             <TrendingUp />
           </StatIconWrapper>
           <StatLabel>This Month</StatLabel>
@@ -413,18 +413,18 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({ hideBalance = 
         </StatCard>
 
         <StatCard>
-          <Stat IconWrapper>
+          <StatIconWrapper>
             <CheckCircle />
-          </Stat IconWrapper>
+          </StatIconWrapper>
           <StatLabel>Total Withdrawn</StatLabel>
           <StatValue>{balance ? formatCurrency(balance.total_withdrawn_cents) : '$0.00'}</StatValue>
           <StatSubtext>{overview?.withdrawal_count || 0} withdrawals</StatSubtext>
         </StatCard>
 
         <StatCard>
-          <Stat IconWrapper>
+          <StatIconWrapper>
             <Clock />
-          </Stat IconWrapper>
+          </StatIconWrapper>
           <StatLabel>Account Health</StatLabel>
           <StatValue>{overview?.account_health || 'Good'}</StatValue>
           <StatSubtext>Regular activity detected</StatSubtext>
