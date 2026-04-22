@@ -15,9 +15,9 @@ import axios from 'axios'
  * @returns {Object} - Referral URL utilities and state
  */
 export const useReferralUrl = (campaignId: string, referralCode: string) => {
-  const [generatedUrl, setGeneratedUrl] = useState(null)
+  const [generatedUrl, setGeneratedUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
 
   // Generate referral URL
   const generateUrl = useCallback(
