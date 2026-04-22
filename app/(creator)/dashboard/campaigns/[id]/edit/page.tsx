@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import styled from 'styled-components'
 import { useState } from 'react'
-import PrayerSettingsTab from '@/components/campaign/PrayerSettingsTab'
+import { PrayerSettingsTab } from '@/components/campaign/PrayerSettingsTab'
 
 const Container = styled.div`
   max-width: 1200px;

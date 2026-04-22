@@ -11,7 +11,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import styled from 'styled-components';
 import CampaignAnalyticsDashboard from '@/components/campaign/CampaignAnalyticsDashboard';
-import { useAuth } from '@/api/hooks/useAuth';
+import { useLogout } from '@/api/hooks/useAuth';
 
 // ============================================================================
 // STYLED COMPONENTS

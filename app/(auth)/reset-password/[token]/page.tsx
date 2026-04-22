@@ -573,3 +573,4 @@ export default function ResetPasswordPage() {
       </HelpSection>
     </Container>
   )
+}

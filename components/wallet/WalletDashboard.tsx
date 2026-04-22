@@ -186,7 +186,7 @@ const StatCard = styled.div`
   }
 `
 
-const Stat IconWrapper = styled.div`
+const StatIconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;

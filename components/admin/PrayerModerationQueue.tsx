@@ -521,4 +521,5 @@ function PrayerModerationQueue() {
   )
 }
 
-export { PrayerModerationQueue }
+export { PrayerModerationQueue };
+export default PrayerModerationQueue;
