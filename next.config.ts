@@ -1,19 +1,28 @@
 import type { NextConfig } from "next";
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const nextConfig: NextConfig = {
   /* config options here */
+  
+  // ✅ Production Optimization: Disable source maps to speed up builds
+  productionBrowserSourceMaps: false,
+  
+  // ✅ Compiler optimizations for styled-components
   compiler: {
     styledComponents: {
-      displayName: true,
+      displayName: !isProduction,
       ssr: true,
-      minify: true,
+      minify: isProduction,
       transpileTemplateLiterals: true,
       pure: true,
     },
+    // Remove console logs in production for smaller bundle
+    removeConsole: isProduction ? { exclude: ['error', 'warn'] } : false,
   },
+  
+  // ✅ Image optimization configuration
   images: {
-    // In development, disable optimization to allow localhost images
-    // In production, optimization is enabled for performance
     unoptimized: process.env.NODE_ENV === 'development',
     remotePatterns: [
       // Development: localhost backend
@@ -34,6 +43,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  
   // ✅ API Proxy: Forward all /api/* requests to backend
   async rewrites() {
     return {
@@ -45,8 +55,15 @@ const nextConfig: NextConfig = {
       ],
     };
   },
+  
+  // ✅ TypeScript: Ignore build errors (existing components may have issues)
   typescript: {
     ignoreBuildErrors: true,
+  },
+  
+  // ✅ Experimental optimizations for faster builds
+  experimental: {
+    optimizePackageImports: ['@mui/material', '@mui/icons-material'],
   },
 };
 

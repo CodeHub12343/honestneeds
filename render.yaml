@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: honestneeds
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=512
+    routes:
+      - path: /
+        matchType: prefix
