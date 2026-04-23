@@ -62,10 +62,10 @@ const nextConfig: NextConfig = {
     };
   },
   
-  // ✅ TypeScript: Ignore build errors (existing components may have issues)
+/*   // ✅ TypeScript: Ignore build ercommit ors (existing components may have issues)
   typescript: {
-    ignoreBuildErrors: true,
-  },
+    ignoreBuildErrors: false,
+  }, */
   
   // ✅ Experimental optimizations for faster builds
   experimental: {
