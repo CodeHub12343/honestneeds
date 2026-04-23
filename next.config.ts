@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+if (isProduction) {
+  console.log('🔍 [NEXT.CONFIG] Loading production configuration...');
+  console.log('  NODE_ENV:', process.env.NODE_ENV);
+  console.log('  NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
+}
+
 const nextConfig: NextConfig = {
   /* config options here */
   

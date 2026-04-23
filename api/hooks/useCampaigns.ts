@@ -53,9 +53,15 @@ export function useCampaigns(
 // USE CAMPAIGN - Single campaign detail
 // ============================================
 export function useCampaign(id: string | undefined) {
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production' && !id) {
+    console.log('🔍 [useCampaign] ⚠️ Hook called with undefined ID during production build');
+  }
   return useQuery({
     queryKey: campaignKeys.detail(id || ''),
-    queryFn: () => campaignService.getCampaign(id!),
+    queryFn: () => {
+      if (!id) throw new Error('useCampaign: ID is undefined - this should not execute if enabled is false');
+      return campaignService.getCampaign(id);
+    },
     enabled: !!id,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes garbage collection
