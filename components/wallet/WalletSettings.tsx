@@ -8,14 +8,13 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 import { Plus, Trash2, CheckCircle, Clock, AlertCircle, Bell, Lock } from 'lucide-react'
-// Wallet hooks temporarily commented out - to be implemented
-// import {
-//   usePaymentMethods,
-//   useAddPaymentMethod,
-//   useDeletePaymentMethod,
-//   useNotificationPreferences,
-//   useUpdateNotificationPreferences
-// } from '@/api/hooks/useWallet'
+import {
+  usePaymentMethods,
+  useAddPaymentMethod,
+  useDeletePaymentMethod,
+  useNotificationPreferences,
+  useUpdateNotificationPreferences
+} from '@/api/hooks/useWallet'
 import { Button } from '@/components/Button'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 

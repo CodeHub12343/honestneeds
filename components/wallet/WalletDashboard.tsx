@@ -186,7 +186,7 @@ const StatCard = styled.div`
   }
 `
 
-const StatIconWrapper = styled.div`
+const Stat IconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -404,27 +404,27 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({ hideBalance = 
       {/* Stats Grid */}
       <Grid>
         <StatCard>
-          <StatIconWrapper>
+          <Stat IconWrapper>
             <TrendingUp />
-          </StatIconWrapper>
+          </Stat IconWrapper>
           <StatLabel>This Month</StatLabel>
           <StatValue>{overview ? formatCurrency(overview.pending_withdrawal_amount) : '$0.00'}</StatValue>
           <StatSubtext>Pending payout</StatSubtext>
         </StatCard>
 
         <StatCard>
-          <StatIconWrapper>
+          <Stat IconWrapper>
             <CheckCircle />
-          </StatIconWrapper>
+          </Stat IconWrapper>
           <StatLabel>Total Withdrawn</StatLabel>
           <StatValue>{balance ? formatCurrency(balance.total_withdrawn_cents) : '$0.00'}</StatValue>
           <StatSubtext>{overview?.withdrawal_count || 0} withdrawals</StatSubtext>
         </StatCard>
 
         <StatCard>
-          <StatIconWrapper>
+          <Stat IconWrapper>
             <Clock />
-          </StatIconWrapper>
+          </Stat IconWrapper>
           <StatLabel>Account Health</StatLabel>
           <StatValue>{overview?.account_health || 'Good'}</StatValue>
           <StatSubtext>Regular activity detected</StatSubtext>

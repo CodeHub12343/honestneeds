@@ -87,6 +87,7 @@ export interface CampaignDetail extends Campaign {
   end_date: string
   scope_description?: string
   related_campaigns: Campaign[]
+  image_url?: string // Backend returns image_url
 }
 
 export interface CampaignAnalytics {

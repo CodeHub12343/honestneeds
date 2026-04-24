@@ -132,7 +132,7 @@ export const paymentMethodService = {
   /**
    * Convert frontend PaymentMethod format to backend API format
    */
-  private convertToBackendFormat(method: PaymentMethod): Record<string, any> {
+  convertToBackendFormat(method: PaymentMethod): Record<string, any> {
     const basePayload = {
       type: method.type,
     }

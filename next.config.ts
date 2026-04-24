@@ -37,7 +37,12 @@ const nextConfig: NextConfig = {
         hostname: 'localhost',
         port: '5000',
       },
-      // Production: configure your actual backend domain
+      // Production: Render backend
+      {
+        protocol: 'https',
+        hostname: 'honestneeds-backend.onrender.com',
+      },
+      // Legacy support for custom domains
       {
         protocol: 'https',
         hostname: 'api.honestneed.com',

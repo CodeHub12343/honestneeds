@@ -28,7 +28,6 @@ export interface Sweepstakes {
   status: 'active' | 'drawing' | 'completed' | 'claimed' | 'cancelled'
   isDrawingOpen: boolean
   winnerId?: string
-  drawingDate?: string
 }
 
 export interface WinnerCheckResult {
