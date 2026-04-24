@@ -29,7 +29,8 @@ const nextConfig: NextConfig = {
   
   // ✅ Image optimization configuration
   images: {
-    unoptimized: process.env.NODE_ENV === 'development',
+    // Disable optimization on Render - external image optimization fails
+    unoptimized: true,
     remotePatterns: [
       // Development: localhost backend
       {
@@ -37,7 +38,12 @@ const nextConfig: NextConfig = {
         hostname: 'localhost',
         port: '5000',
       },
-      // Production: configure your actual backend domain
+      // Production: Render backend
+      {
+        protocol: 'https',
+        hostname: 'honestneeds-backend.onrender.com',
+      },
+      // Legacy support for custom domains
       {
         protocol: 'https',
         hostname: 'api.honestneed.com',
