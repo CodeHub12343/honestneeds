@@ -45,4 +45,5 @@ const PrayerSettingsTab: React.FC<PrayerSettingsTabProps> = ({
   )
 }
 
-export { PrayerSettingsTab }
+export { PrayerSettingsTab };
+export default PrayerSettingsTab;

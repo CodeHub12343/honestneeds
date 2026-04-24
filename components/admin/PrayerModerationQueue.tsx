@@ -252,7 +252,7 @@ interface PrayerModerationType {
   supporter_id?: { _id: string; name: string }
 }
 
-function PrayerModerationQueue() {
+export default function PrayerModerationQueue() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [filters, setFilters] = useState({
     status: ['submitted', 'flagged'],
@@ -520,5 +520,3 @@ function PrayerModerationQueue() {
     </Container>
   )
 }
-
-export { PrayerModerationQueue }
