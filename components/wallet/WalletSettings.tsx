@@ -8,13 +8,8 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 import { Plus, Trash2, CheckCircle, Clock, AlertCircle, Bell, Lock } from 'lucide-react'
-import {
-  usePaymentMethods,
-  useAddPaymentMethod,
-  useDeletePaymentMethod,
-  useNotificationPreferences,
-  useUpdateNotificationPreferences
-} from '@/api/hooks/useWallet'
+// Payment method hooks temporarily not implemented
+import { useNotificationPreferences, useUpdateNotificationPreferences } from '@/api/hooks/useWallet'
 import { Button } from '@/components/Button'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 
@@ -359,10 +354,19 @@ const getStatusIcon = (status: string) => {
 export const WalletSettings: React.FC = () => {
   const [showAddMethod, setShowAddMethod] = useState(false)
 
-  const { data: methods, isLoading: methodsLoading } = usePaymentMethods()
-  const { mutate: deleteMethod, isPending: isDeleting } = useDeletePaymentMethod()
+  // Payment method hooks not yet implemented - commented out to prevent build errors
+  // const { data: methods, isLoading: methodsLoading } = usePaymentMethods()
+  // const { mutate: deleteMethod, isPending: isDeleting } = useDeletePaymentMethod()
+  
+  // Use the available notification preferences hooks
   const { data: preferences, isLoading: preferencesLoading } = useNotificationPreferences()
   const { mutate: updatePreferences, isPending: isUpdatingPreferences } = useUpdateNotificationPreferences()
+  
+  // Temporary values while payment methods are being implemented
+  const methods = []
+  const methodsLoading = false
+  const isDeleting = false
+  const deleteMethod = () => {}
 
   const handleDeleteMethod = (methodId: string) => {
     if (window.confirm('Are you sure you want to delete this payment method?')) {
