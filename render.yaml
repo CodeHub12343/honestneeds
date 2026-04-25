@@ -4,12 +4,14 @@ services:
     env: node
     plan: free
     buildCommand: npm install && npm run build
-    startCommand: npm start -- -H 0.0.0.0 -p ${PORT:-10000}
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: NODE_OPTIONS
         value: --max-old-space-size=512
+      - key: PORT
+        value: '10000'
     routes:
       - path: /
         matchType: prefix
