@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     buildCommand: npm install && npm run build
-    startCommand: npm start
+    startCommand: npm start -- -H 0.0.0.0 -p ${PORT:-10000}
     envVars:
       - key: NODE_ENV
         value: production
