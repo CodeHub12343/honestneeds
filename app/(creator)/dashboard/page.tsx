@@ -28,13 +28,13 @@ import { HealthScore } from './components/HealthScore'
 import { BatchOperations } from './components/BatchOperations'
 import { SmartConfirmation, useUndoableAction } from './components/SmartConfirmation'
 import { useToast } from '@/hooks/useToast'
-// Phase 4: Real-Time & Notifications
-import { NotificationPreferencesProvider, useNotificationPreferences } from './context/NotificationPreferencesContext'
-import { useWebSocketNotifications, NotificationData } from './hooks/useWebSocketNotifications'
-import { NotificationStack } from './components/NotificationBanner'
-import NotificationPreferencesModal from './components/NotificationPreferencesModal'
-import { browserNotificationsService } from './services/BrowserNotificationsService'
-import { soundAlertsService } from './services/SoundAlertsService'
+// Phase 4: Real-Time & Notifications - TEMPORARILY DISABLED
+// import { NotificationPreferencesProvider, useNotificationPreferences } from './context/NotificationPreferencesContext'
+// import { useWebSocketNotifications, NotificationData } from './hooks/useWebSocketNotifications'
+// import { NotificationStack } from './components/NotificationBanner'
+// import NotificationPreferencesModal from './components/NotificationPreferencesModal'
+// import { browserNotificationsService } from './services/BrowserNotificationsService'
+// import { soundAlertsService } from './services/SoundAlertsService'
 
 /**
  * Unified Creator Dashboard
@@ -124,16 +124,16 @@ function DashboardContent() {
   const router = useRouter()
   const { user } = useAuthStore()
   const { showToast } = useToast()
-  const { preferences } = useNotificationPreferences()
+  // const { preferences } = useNotificationPreferences() // DISABLED
 
   // Dashboard context
   const { filters, updateFilter } = useDashboardContext()
 
-  // Phase 4: Notifications
-  const { notifications, unreadCount, isConnected, clearNotification } =
-    useWebSocketNotifications(user?.id)
-  const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false)
-  const [notificationStack, setNotificationStack] = useState<NotificationData[]>([])
+  // Phase 4: Notifications - TEMPORARILY DISABLED
+  // const { notifications, unreadCount, isConnected, clearNotification } =
+  //   useWebSocketNotifications(user?.id)
+  // const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false)
+  // const [notificationStack, setNotificationStack] = useState<NotificationData[]>([])
 
   // Phase 3: Selection & Batch Operations state
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -148,68 +148,68 @@ function DashboardContent() {
   const [mockActivities, setMockActivities] = useState<ActivityRecord[]>([])
   const [mockTimeSeriesData, setMockTimeSeriesData] = useState<TimeSeriesDataPoint[]>([])
 
-  // Initialize services and browser notifications
-  useEffect(() => {
-    if (!user?.id) return
+  // Initialize services and browser notifications - DISABLED
+  // useEffect(() => {
+  //   if (!user?.id) return
+  //
+  //   // Initialize sound alerts service
+  //   soundAlertsService.initialize({
+  //     volume: preferences?.soundSettings?.volume ? preferences.soundSettings.volume * 100 : 80,
+  //     soundType: preferences?.soundSettings?.soundType || 'bell',
+  //     muted: !preferences?.soundEnabled,
+  //   })
+  //
+  //   // Initialize browser notifications (request permission)
+  //   if (preferences?.browserNotificationsEnabled) {
+  //     browserNotificationsService.initialize().catch((error) => {
+  //       console.warn('Browser notifications not available:', error)
+  //     })
+  //   }
+  //
+  //   console.log('✅ Phase 4 services initialized', {
+  //     sound: !preferences?.soundEnabled ? 'muted' : 'enabled',
+  //     browserNotifications: preferences?.browserNotificationsEnabled ? 'enabled' : 'disabled',
+  //   })
+  // }, [user?.id, preferences])
 
-    // Initialize sound alerts service
-    soundAlertsService.initialize({
-      volume: preferences?.soundSettings?.volume ? preferences.soundSettings.volume * 100 : 80,
-      soundType: preferences?.soundSettings?.soundType || 'bell',
-      muted: !preferences?.soundEnabled,
-    })
-
-    // Initialize browser notifications (request permission)
-    if (preferences?.browserNotificationsEnabled) {
-      browserNotificationsService.initialize().catch((error) => {
-        console.warn('Browser notifications not available:', error)
-      })
-    }
-
-    console.log('✅ Phase 4 services initialized', {
-      sound: !preferences?.soundEnabled ? 'muted' : 'enabled',
-      browserNotifications: preferences?.browserNotificationsEnabled ? 'enabled' : 'disabled',
-    })
-  }, [user?.id, preferences])
-
-  // Phase 4: Handle new notifications from WebSocket
-  useEffect(() => {
-    if (notifications.length > 0) {
-      const latestNotification = notifications[0]
-      // Generate deterministic ID if missing (use timestamp as fallback)
-      const notificationId = latestNotification.id || `notif-${Date.now()}-${notifications.length}`
-
-      // Update notification stack with proper typing
-      setNotificationStack((prev) => [
-        {
-          ...latestNotification,
-          id: notificationId,
-        },
-        ...prev,
-      ].slice(0, 5))
-
-      // Play sound if enabled
-      if (preferences?.soundEnabled) {
-        soundAlertsService.playSound({ soundType: preferences?.soundSettings?.soundType || 'bell' })
-      }
-
-      // Show browser notification if enabled
-      if (preferences?.browserNotificationsEnabled) {
-        browserNotificationsService.sendNotification(latestNotification.title, {
-          body: latestNotification.description,
-          tag: latestNotification.eventType,
-        })
-      }
-
-      // Show toast for urgent notifications
-      if (latestNotification.severity === 'danger' || latestNotification.severity === 'warning') {
-        showToast({
-          type: latestNotification.severity === 'danger' ? 'error' : 'warning',
-          message: latestNotification.title,
-        })
-      }
-    }
-  }, [notifications, preferences, showToast])
+  // Phase 4: Handle new notifications from WebSocket - DISABLED
+  // useEffect(() => {
+  //   if (notifications.length > 0) {
+  //     const latestNotification = notifications[0]
+  //     // Generate deterministic ID if missing (use timestamp as fallback)
+  //     const notificationId = latestNotification.id || `notif-${Date.now()}-${notifications.length}`
+  //
+  //     // Update notification stack with proper typing
+  //     setNotificationStack((prev) => [
+  //       {
+  //         ...latestNotification,
+  //         id: notificationId,
+  //       },
+  //       ...prev,
+  //     ].slice(0, 5))
+  //
+  //     // Play sound if enabled
+  //     if (preferences?.soundEnabled) {
+  //       soundAlertsService.playSound({ soundType: preferences?.soundSettings?.soundType || 'bell' })
+  //     }
+  //
+  //     // Show browser notification if enabled
+  //     if (preferences?.browserNotificationsEnabled) {
+  //       browserNotificationsService.sendNotification(latestNotification.title, {
+  //         body: latestNotification.description,
+  //         tag: latestNotification.eventType,
+  //       })
+  //     }
+  //
+  //     // Show toast for urgent notifications
+  //     if (latestNotification.severity === 'danger' || latestNotification.severity === 'warning') {
+  //       showToast({
+  //         type: latestNotification.severity === 'danger' ? 'error' : 'warning',
+  //         message: latestNotification.title,
+  //       })
+  //     }
+  //   }
+  // }, [notifications, preferences, showToast])
 
   // Data hooks
   const { campaigns, stats, totalCount, isLoading, error, refetch } = useDashboardData(
@@ -528,19 +528,19 @@ function DashboardContent() {
 
   return (
     <>
-      {/* Phase 4: Notification Stack - Real-time notifications */}
-      <NotificationStack
+      {/* Phase 4: Notification Stack - TEMPORARILY DISABLED */}
+      {/* <NotificationStack
         notifications={notificationStack.filter((notif) => notif.id).map((notif) => ({
-          id: notif.id || '', // Already guaranteed by effect to have id
+          id: notif.id || '',
           title: notif.title,
           description: notif.description,
           severity: notif.severity,
         }))}
         onDismiss={clearNotification}
-      />
+      /> */}
 
-      {/* Phase 4: Notification Preferences Modal */}
-      <NotificationPreferencesModal isOpen={isPreferencesModalOpen} onClose={() => setIsPreferencesModalOpen(false)} />
+      {/* Phase 4: Notification Preferences Modal - DISABLED */}
+      {/* <NotificationPreferencesModal isOpen={isPreferencesModalOpen} onClose={() => setIsPreferencesModalOpen(false)} /> */}
 
       <PageContainer>
         {error && !showError && (
@@ -550,13 +550,13 @@ function DashboardContent() {
           </ErrorContainer>
         )}
 
-        {/* Phase 4: Connection Status Indicator */}
-        {!isConnected && (
+        {/* Phase 4: Connection Status Indicator - DISABLED */}
+        {/* {!isConnected && (
           <ErrorContainer style={{ background: '#fef3c7', borderColor: '#fcd34d', color: '#92400e' }}>
             <span>⚠️ Real-time notifications are disconnected</span>
             <button onClick={() => window.location.reload()}>Reconnect</button>
           </ErrorContainer>
-        )}
+        )} */}
 
       <DashboardHeader
         title="Dashboard"
@@ -564,8 +564,8 @@ function DashboardContent() {
         searchValue={searchQuery}
         onSearchChange={handleSearch}
         campaignCount={totalCount}
-        unreadCount={unreadCount}
-        onNotificationsClick={() => setIsPreferencesModalOpen(true)}
+        unreadCount={0} // Real-time notifications temporarily disabled
+        onNotificationsClick={() => {}} // Notifications disabled
       />
 
       {/* Quick Actions */}
@@ -718,14 +718,15 @@ function DashboardContent() {
 
 /**
  * Main Dashboard Page
- * Wrapped with DashboardProvider and NotificationPreferencesProvider (Phase 4)
+ * Wrapped with DashboardProvider
+ * NotificationPreferencesProvider temporarily disabled (Phase 4 - real-time notifications disabled)
  */
 export default function DashboardPage() {
   return (
-    <NotificationPreferencesProvider>
-      <DashboardProvider>
-        <DashboardContent />
-      </DashboardProvider>
-    </NotificationPreferencesProvider>
+    // <NotificationPreferencesProvider> // DISABLED - Temporarily removed real-time notifications
+    <DashboardProvider>
+      <DashboardContent />
+    </DashboardProvider>
+    // </NotificationPreferencesProvider>
   )
 }
