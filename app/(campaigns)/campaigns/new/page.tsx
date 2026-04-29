@@ -19,7 +19,7 @@ const PageContainer = styled.div`
 
 export default function CreateCampaignPage() {
   return (
-    <ProtectedRoute allowedRoles={['creator']}>
+    <ProtectedRoute allowedRoles={['creator', 'admin']}>
       <PageContainer>
         <CampaignWizard draftExists={true} />
       </PageContainer>
