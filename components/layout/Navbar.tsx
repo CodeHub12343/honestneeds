@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
 import Button from '@/components/ui/Button'
-import { Menu, X, ChevronDown, Home, PlusCircle, Heart, MessageSquare, Settings, LogOut, Shield } from 'lucide-react'
+import { Menu, X, ChevronDown, Home, PlusCircle, MessageSquare, Settings, LogOut, Shield } from 'lucide-react'
 
 interface NavLink {
   label: string
@@ -98,13 +98,14 @@ const Logo = styled(Link)`
     border-radius: 4px;
   }
 
-  span:first-child {
-    font-size: 1.5rem;
+  img {
+    display: block;
+    height: 24px;
+    width: auto;
   }
 
-  svg {
-    color: #667eea;
-    transition: color 200ms ease-out;
+  span:first-child {
+    font-size: 1.5rem;
   }
 
   &:hover svg {
@@ -566,7 +567,7 @@ export default function Navbar() {
     <NavWrapper role="navigation" aria-label="Main navigation">
       {/* Logo */}
       <Logo href="/" aria-label="HonestNeed home">
-        <Heart size={24} strokeWidth={1.5} />
+        <img src="/1000019752.png" alt="HonestNeed" />
         <span>HonestNeed</span>
         <span>HN</span>
       </Logo>

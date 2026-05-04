@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiHeart, FiMail, FiArrowRight, FiCheck } from 'react-icons/fi';
+import { FiMail, FiArrowRight, FiCheck } from 'react-icons/fi';
 import Container from '../ui/Container';
 import Button from '../ui/Button';
 import StyledInput from '../ui/Input';
@@ -36,6 +36,12 @@ const Logo = styled.a`
   color: white;
   text-decoration: none;
   margin-bottom: ${({ theme }) => theme?.spacing?.lg || '16px'};
+
+  img {
+    display: block;
+    height: 28px;
+    width: auto;
+  }
 
   svg {
     color: ${({ theme }) => theme?.colors?.primary || '#6366F1'};
@@ -260,7 +266,7 @@ export default function Footer() {
         <FooterGrid>
           <BrandColumn>
             <Logo href="/">
-              <FiHeart />
+              <img src="/1000019752.png" alt="HonestNeed" />
               Honest<span>Need</span>
             </Logo>
             <MissionText>
