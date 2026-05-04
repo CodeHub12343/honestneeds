@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMenu, FiX, FiSearch, FiHeart } from 'react-icons/fi';
+import { FiMenu, FiX, FiSearch } from 'react-icons/fi';
 import Button from '../ui/Button';
 
 const HeaderWrapper = styled.header`
@@ -33,20 +33,12 @@ const Logo = styled.a`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme?.spacing?.sm || '8px'};
-  font-family: ${({ theme }) => theme?.typography?.headingFont || 'Poppins, sans-serif'};
-  font-size: ${({ theme }) => theme?.typography?.sizes?.h4?.size || '20px'};
-  font-weight: ${({ theme }) => theme?.typography?.weights?.bold || '700'};
-  color: ${({ theme }) => theme?.colors?.text || '#0F172A'};
   text-decoration: none;
 
-  svg {
-    color: ${({ theme }) => theme?.colors?.primary || '#6366F1'};
-    width: 28px;
-    height: 28px;
-  }
-
-  span {
-    color: ${({ theme }) => theme?.colors?.primary || '#6366F1'};
+  img {
+    display: block;
+    height: 40px;
+    width: auto;
   }
 `;
 
@@ -182,8 +174,7 @@ export default function Header() {
       <HeaderWrapper>
         <HeaderContainer>
           <Logo href="/">
-            <FiHeart />
-            Honest<span>Need</span>
+            <img src="/1000019752.png" alt="HonestNeed" />
           </Logo>
 
           <Nav>
@@ -221,8 +212,7 @@ export default function Header() {
           >
             <MobileMenuHeader>
               <Logo href="/">
-                <FiHeart />
-                Honest<span>Need</span>
+                <img src="/1000019752.png" alt="HonestNeed" />
               </Logo>
               <MobileMenuButton 
                 onClick={() => setMobileMenuOpen(false)}
