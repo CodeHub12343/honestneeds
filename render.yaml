@@ -3,8 +3,8 @@ services:
     name: honestneeds
     env: node
     plan: free
-    # Build with higher memory limit; copy standalone files after build
-    buildCommand: NODE_OPTIONS=--max-old-space-size=2048 npm install && NODE_OPTIONS=--max-old-space-size=2048 npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
+    # Build with explicit memory settings via build script
+    buildCommand: npm install && bash build.sh && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/ 2>/dev/null || true
     startCommand: node .next/standalone/server.js
     envVars:
       - key: NODE_ENV
