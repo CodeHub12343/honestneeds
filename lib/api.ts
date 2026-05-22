@@ -59,10 +59,31 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     } else {
-      console.warn('[API] ✗ No auth token found - request will fail with 401', {
-        url: config.url,
-        method: config.method
-      })
+      // Check if this is a known public endpoint to avoid spamming console warnings
+      const url = config.url || ''
+      const isPublic = 
+        url.includes('/auth/') ||
+        url.includes('/public') ||
+        url.includes('/sponsorships/create') ||
+        url.includes('/onboard') ||
+        (config.method?.toLowerCase() === 'get' && (
+          url.includes('/campaigns') ||
+          url.includes('/need-types') ||
+          url.includes('/trending') ||
+          url.includes('/related')
+        ))
+
+      if (!isPublic) {
+        console.warn('[API] ✗ No auth token found for private endpoint - request will fail with 401', {
+          url: config.url,
+          method: config.method
+        })
+      } else if (isDev) {
+        console.log('[API] Public endpoint request (no auth token needed)', {
+          url: config.url,
+          method: config.method
+        })
+      }
     }
 
     // Handle FormData requests - don't set Content-Type so browser can set proper boundary

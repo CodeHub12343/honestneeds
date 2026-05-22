@@ -361,8 +361,6 @@ export default function SponsorshipsPage() {
               width="100%"
               style={{ borderRadius: '16px' }}
               controls
-              poster=""
-              src=""
             >
               <track kind="captions" />
               Your browser does not support the video tag.

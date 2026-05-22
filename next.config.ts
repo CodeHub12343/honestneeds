@@ -11,6 +11,9 @@ if (isProduction) {
 const nextConfig: NextConfig = {
   /* config options here */
   
+  // ✅ Standalone output for self-hosted deployment (Render, Docker, etc.)
+  output: 'standalone',
+  
   // ✅ Production Optimization: Disable source maps to speed up builds
   productionBrowserSourceMaps: false,
   
