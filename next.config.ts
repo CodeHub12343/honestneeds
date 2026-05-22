@@ -8,6 +8,7 @@ if (isProduction) {
   console.log('  NODE_ENV:', process.env.NODE_ENV);
   console.log('  NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
   console.log('  isRender:', isRender);
+  console.log('  NODE_OPTIONS:', process.env.NODE_OPTIONS);
 }
 
 const nextConfig: NextConfig = {
