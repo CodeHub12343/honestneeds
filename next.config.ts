@@ -81,11 +81,6 @@ const nextConfig: NextConfig = {
   // ✅ Experimental optimizations for faster builds
   experimental: {
     optimizePackageImports: ['@mui/material', '@mui/icons-material'],
-    // Limit CPU concurrency and disable worker threads on Render to prevent OOM crash
-    ...(isRender && {
-      cpus: 1,
-      workerThreads: false,
-    }),
   },
 };
 
