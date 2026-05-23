@@ -55,7 +55,7 @@ const build = spawn('next', ['build'], {
   env: env,
   cwd: process.cwd(),
   stdio: ['ignore', 'pipe', 'pipe'], // Separate stdout and stderr
-  shell: false,
+  shell: true, // Required for cross-platform compatibility
   detached: false,
 });
 

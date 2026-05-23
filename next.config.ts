@@ -72,15 +72,13 @@ const nextConfig: NextConfig = {
     };
   },
   
-   // ✅ TypeScript: Ignore build ercommit ors (existing components may have issues)
+   // ✅ TypeScript: Ignore build errors (existing components may have issues)
   typescript: {
     ignoreBuildErrors: true,
   }, 
   
-  // ✅ Experimental optimizations for faster builds
-  experimental: {
-    optimizePackageImports: ['@mui/material', '@mui/icons-material'],
-  },
+  // ✅ Minimal experimental config - removed optimizations that may cause crashes on Render
+  experimental: {},
 };
 
 export default nextConfig;
