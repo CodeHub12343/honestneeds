@@ -397,7 +397,7 @@ export default function SponsorshipsPage() {
         }}>
           <div style={{ position: 'relative', paddingTop: '56.25%' }}>
             <video
-              src="/videos/mission-video.mp4"
+              src="https://res.cloudinary.com/dctvil2gu/video/upload/v1779616053/modified-video_lotu6r.mp4"
               controls
               playsInline
               style={{

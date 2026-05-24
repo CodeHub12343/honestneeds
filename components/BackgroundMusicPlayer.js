@@ -57,7 +57,7 @@ export default function BackgroundMusicPlayer() {
     <>
       <audio
         ref={audioRef}
-        src="/audio/background-music.mp3"
+        src="https://res.cloudinary.com/dctvil2gu/video/upload/v1779613243/I_CAN_DO_ALL_THINGS_THROUGH_CHRIST_V2_qakp1g.mp3"
         loop
         autoPlay
         muted
