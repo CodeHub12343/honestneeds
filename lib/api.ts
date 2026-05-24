@@ -70,7 +70,8 @@ apiClient.interceptors.request.use(
           url.includes('/campaigns') ||
           url.includes('/need-types') ||
           url.includes('/trending') ||
-          url.includes('/related')
+          url.includes('/related') ||
+          (url.includes('/sponsorships/') && !url.includes('/sponsorships/admin'))
         ))
 
       if (!isPublic) {
