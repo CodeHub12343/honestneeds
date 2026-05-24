@@ -43,6 +43,7 @@ const Main = styled.main`
 `
 
 export const metadata = {
+  metadataBase: new URL('https://www.honestneed.com'),
   title: {
     default: 'HonestNeed - Fundraising & Community Support',
     template: '%s | HonestNeed',
@@ -67,11 +68,26 @@ export const metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://honestneed.com',
+    url: 'https://www.honestneed.com',
     siteName: 'HonestNeed',
     title: 'HonestNeed - Fundraising & Community Support',
     description:
       'HonestNeed is a community platform for transparent fundraising, sharing, and sweepstakes.',
+    images: [
+      {
+        url: '/1000019752.png',
+        width: 1200,
+        height: 630,
+        alt: 'HonestNeed Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'HonestNeed - Fundraising & Community Support',
+    description:
+      'HonestNeed is a community platform for transparent fundraising, sharing, and sweepstakes.',
+    images: ['/1000019752.png'],
   },
   icons: {
     icon: '/favicon.ico',
