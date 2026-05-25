@@ -53,6 +53,7 @@ const adminNavLinks: NavLink[] = [
   { label: 'Transactions', href: '/admin/transactions', icon: '💸', roles: ['admin'], group: 'Admin Panel' },
   { label: 'Sweepstakes', href: '/admin/sweepstakes', icon: '🎲', roles: ['admin'], group: 'Admin Panel' },
   { label: 'Manage Sweepstakes', href: '/admin/manage-sweepstakes', icon: '⚙️', roles: ['admin'], group: 'Admin Panel' },
+  { label: 'Manage Sponsorships', href: '/admin/sponsorships', icon: '💼', roles: ['admin'], group: 'Admin Panel' },
   { label: 'Reports', href: '/admin/reports', icon: '📊', roles: ['admin'], group: 'Admin Panel' },
   { label: 'Settings', href: '/admin/settings', icon: '🔧', roles: ['admin'], group: 'Admin Panel' },
 ]
