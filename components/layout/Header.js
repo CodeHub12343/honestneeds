@@ -190,7 +190,7 @@ export default function Header() {
               <FiSearch size={20} />
             </SearchButton>
             <DesktopCTA>
-              <Button size="small">Start a Campaign</Button>
+              <Button as="link" href="/login" size="small">Start a Campaign</Button>
             </DesktopCTA>
             <MobileMenuButton 
               onClick={() => setMobileMenuOpen(true)}
@@ -235,8 +235,8 @@ export default function Header() {
             </MobileNav>
 
             <MobileCTA>
-              <Button size="large">Start a Campaign — $19.99</Button>
-              <Button variant="secondary" size="large">Browse Needs</Button>
+              <Button as="link" href="/login" size="large" onClick={() => setMobileMenuOpen(false)}>Start a Campaign — $19.99</Button>
+              <Button as="link" href="/sponsorships" variant="secondary" size="large" onClick={() => setMobileMenuOpen(false)}>View Sponsorships</Button>
             </MobileCTA>
           </MobileMenu>
         )}

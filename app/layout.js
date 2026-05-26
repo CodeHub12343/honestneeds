@@ -45,11 +45,11 @@ const Main = styled.main`
 export const metadata = {
   metadataBase: new URL('https://www.honestneed.com'),
   title: {
-    default: 'HonestNeed - Fundraising & Community Support',
-    template: '%s | HonestNeed',
+    default: 'Honest Need — Help a Neighbor. Change a Life.',
+    template: '%s | Honest Need',
   },
   description:
-    'HonestNeed is a community platform for transparent fundraising, sharing, and sweepstakes. Support campaigns, earn rewards, and make a difference.',
+    'Honest Need is a community crowdfunding and peer-support platform. Help a neighbor, change a life. Create needs, share them, and let people help — directly.',
   keywords: [
     'fundraising',
     'crowdfunding',
@@ -59,8 +59,9 @@ export const metadata = {
     'sharing',
     'sweepstakes',
   ],
-  authors: [{ name: 'HonestNeed Team' }],
-  creator: 'HonestNeed',
+  authors: [{ name: 'Honest Need Team' }],
+  creator: 'Honest Need',
+  applicationName: 'Honest Need',
   robots: {
     index: true,
     follow: true,
@@ -69,31 +70,37 @@ export const metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://www.honestneed.com',
-    siteName: 'HonestNeed',
-    title: 'HonestNeed - Fundraising & Community Support',
+    siteName: 'Honest Need',
+    title: 'Honest Need — Help a Neighbor. Change a Life.',
     description:
-      'HonestNeed is a community platform for transparent fundraising, sharing, and sweepstakes.',
+      'Community crowdfunding and peer-support platform. Create a need, share it, and let people help — directly.',
     images: [
       {
-        url: '/1000019752.png',
+        url: 'https://www.honestneed.com/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'HonestNeed Logo',
+        alt: 'Honest Need Logo',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'HonestNeed - Fundraising & Community Support',
+    title: 'Honest Need — Help a Neighbor. Change a Life.',
     description:
-      'HonestNeed is a community platform for transparent fundraising, sharing, and sweepstakes.',
-    images: ['/1000019752.png'],
+      'Community crowdfunding and peer-support platform. Create a need, share it, and let people help — directly.',
+    images: ['https://www.honestneed.com/og-image.png'],
   },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
-    apple: '/apple-touch-icon.png',
+    icon: [
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
+  manifest: '/manifest.json',
 }
 
 export const viewport = {
@@ -101,7 +108,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#667eea',
+  themeColor: '#10B981',
 }
 
 export default function AppLayout({ children }) {
