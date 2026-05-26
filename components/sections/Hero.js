@@ -193,7 +193,7 @@ export default function Hero() {
   };
 
   const handleBrowseNeeds = () => {
-    router.push('/login');
+    router.push('/sponsorships');
   };
 
   return (
@@ -219,7 +219,7 @@ export default function Hero() {
                 Start a Campaign — $19.99
               </Button>
               <Button variant="ghost" icon={FiArrowRight} onClick={handleBrowseNeeds}>
-                Browse Needs
+                View Sponsorships
               </Button>
             </CTAGroup>
 
