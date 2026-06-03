@@ -29,7 +29,7 @@ export const colors = {
 }
 
 export const typography = {
-  fontFamily: '"Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Helvetica Neue", sans-serif',
+  fontFamily: "'Georgia', 'Times New Roman', serif",
   fontSize: {
     xs: '0.75rem', // 12px
     sm: '0.875rem', // 14px

@@ -1,363 +1,453 @@
 'use client'
 
-import styled from 'styled-components'
+import styled, { keyframes, createGlobalStyle } from 'styled-components'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
-import { Eye, EyeOff, Loader, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, Loader, AlertCircle, ArrowRight, Heart } from 'lucide-react'
 import Button from '@/components/ui/Button'
-import { loginSchema, type LoginFormData } from '@/utils/validationSchemas'
+import { loginSchema } from '@/utils/validationSchemas'
 import { useLogin } from '@/api/hooks/useAuth'
 
-// Styled Components
-const Container = styled.div`
+// ─── Brand Tokens ──────────────────────────────────────────────────────────────
+// Extracted from HonestNeed identity: warm amber-gold as primary, deep teal as
+// secondary, warm whites for backgrounds — trustworthy, human, community-focused.
+const tokens = {
+  amber:     '#255eb3',
+  amberDk:   '#2972df',
+  amberLt:   '#c3cfe9',
+  amberGlow: 'rgba(255, 255, 255, 0.18)',
+  teal:      '#0D9488',
+  tealDk:    '#0F766E',
+  tealLt:    'rgba(13, 148, 136, 0.08)',
+  ink:       '#1C1917',
+  inkMid:    '#808080',
+  inkSoft:   '#979797',
+  inkXsoft:  '#9c9c9c',
+  surface:   '#ffffff',
+  surfaceAlt:'#dddddd',
+  border:    '#e2e2e2',
+  errorRed:  '#DC2626',
+  errorBg:   'rgba(255, 131, 131, 0.06)',
+  successGreen:'#059669',
+  successBg:  'rgba(5, 150, 105, 0.06)',
+  white:     '#FFFFFF',
+}
+
+// ─── Keyframes ─────────────────────────────────────────────────────────────────
+const fadeUp = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+`
+
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to   { opacity: 1; }
+`
+
+const float = keyframes`
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33%       { transform: translateY(-8px) rotate(1deg); }
+  66%       { transform: translateY(4px) rotate(-1deg); }
+`
+
+const shimmer = keyframes`
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+`
+
+const spinAnim = keyframes`
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+`
+
+// ─── Layout ────────────────────────────────────────────────────────────────────
+const Page = styled.div`
   min-height: 100vh;
   width: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
-  padding: 2rem 1rem;
+  background-color: ${tokens.surface};
+  background-image:
+    radial-gradient(ellipse 80% 50% at 10% 0%,   rgba(245,158,11,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 60% at 90% 100%,  rgba(13,148,136,0.08) 0%, transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='1' fill='%23F59E0B' fill-opacity='0.08'/%3E%3C/svg%3E");
+  padding: 2rem 1.25rem;
   position: relative;
-
-  @media (min-width: 640px) {
-    padding: 2rem 1.5rem;
-  }
-`
-
-const BackgroundAccent = styled.div`
-  position: absolute;
-  inset: 0;
   overflow: hidden;
+`
+
+// Decorative floating circles — warm amber/teal bubbles in background
+const BubbleBase = styled.div`
+  position: absolute;
+  border-radius: 50%;
   pointer-events: none;
+  animation: ${float} ease-in-out infinite;
 `
 
-const BackgroundBlob1 = styled.div`
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 24rem;
-  height: 24rem;
-  background-color: rgba(59, 130, 246, 0.05);
-  border-radius: 9999px;
-  filter: blur(3rem);
-  opacity: 0.4;
-  transform: translateY(-50%) translateX(50%);
+const Bubble1 = styled(BubbleBase)`
+  width: 320px; height: 320px;
+  top: -80px; right: -80px;
+  background: radial-gradient(circle at 40% 40%, rgba(245,158,11,0.15), rgba(245,158,11,0.02));
+  animation-duration: 14s;
 `
 
-const BackgroundBlob2 = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 20rem;
-  height: 20rem;
-  background-color: #dbeafe;
-  border-radius: 9999px;
-  filter: blur(3rem);
-  opacity: 0.2;
-  transform: translateY(50%) translateX(-25%);
+const Bubble2 = styled(BubbleBase)`
+  width: 200px; height: 200px;
+  bottom: -40px; left: -60px;
+  background: radial-gradient(circle at 60% 60%, rgba(13,148,136,0.12), rgba(13,148,136,0.02));
+  animation-duration: 18s;
+  animation-delay: -6s;
 `
 
-const MainContainer = styled.div`
+const Bubble3 = styled(BubbleBase)`
+  width: 120px; height: 120px;
+  top: 45%; left: 5%;
+  background: radial-gradient(circle, rgba(245,158,11,0.08), transparent 70%);
+  animation-duration: 22s;
+  animation-delay: -10s;
+`
+
+const Wrap = styled.div`
   position: relative;
-  width: 100%;
-  max-width: 28rem;
   z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  animation: ${fadeUp} 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 `
 
-const HeaderSection = styled.div`
-  margin-bottom: 2rem;
+// ─── Logo & Header ──────────────────────────────────────────────────────────────
+const Header = styled.header`
   text-align: center;
-  animation: fadeIn 0.5s ease-out;
-
-  @media (min-width: 640px) {
-    margin-bottom: 2.5rem;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
+  margin-bottom: 2.25rem;
+  animation: ${fadeIn} 0.5s ease both;
 `
 
 const LogoWrapper = styled.div`
-  margin-bottom: 1rem;
-  display: inline-block;
-  padding: 0.625rem;
-  background-color: rgba(59, 130, 246, 0.1);
-  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
 `
 
 const LogoCircle = styled.div`
-  width: 2rem;
-  height: 2rem;
-  border-radius: 9999px;
-  background: linear-gradient(to bottom right, #3b82f6, rgba(59, 130, 246, 0.7));
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, ${tokens.amber} 0%, ${tokens.amberDk} 100%);
+  box-shadow:
+    0 4px 14px ${tokens.amberGlow},
+    0 0 0 3px ${tokens.amberLt};
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 
-  span {
-    color: white;
-    font-weight: bold;
-    font-size: 0.875rem;
+  /* Inner glow */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+  }
+`
+
+const LogoHeartIcon = styled(Heart)`
+  color: white;
+  fill: white;
+  width: 22px;
+  height: 22px;
+  position: relative;
+  z-index: 1;
+`
+
+const LogoWordmark = styled.span`
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${tokens.ink};
+  letter-spacing: -0.02em;
+
+  em {
+    font-style: normal;
+    color: ${tokens.amber};
   }
 `
 
 const Title = styled.h1`
-  font-size: 1.875rem;
-  font-weight: bold;
-  color: #111827;
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.025em;
-
-  @media (min-width: 640px) {
-    font-size: 2.25rem;
-  }
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  font-weight: 700;
+  color: ${tokens.ink};
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
 `
 
 const Subtitle = styled.p`
   font-size: 1rem;
-  color: #6b7280;
-  font-weight: 500;
+  color: ${tokens.inkSoft};
+  font-weight: 400;
+  margin: 0;
+  line-height: 1.5;
 `
 
-const CardContainer = styled.div`
-  animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+// ─── Card ───────────────────────────────────────────────────────────────────────
+const Card = styled.div`
+  background: ${tokens.white};
+  border-radius: 20px;
+  padding: 2rem;
+  border: 1.5px solid ${tokens.border};
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.04),
+    0 8px 32px rgba(28,25,23,0.07),
+    0 0 0 1px rgba(245,158,11,0.04) inset;
+  animation: ${fadeUp} 0.6s 0.05s cubic-bezier(0.22, 1, 0.36, 1) both;
 
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(12px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  @media (min-width: 480px) {
+    padding: 2.5rem;
   }
 `
 
+// ─── Form ────────────────────────────────────────────────────────────────────────
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-
-  @media (min-width: 640px) {
-    gap: 1.5rem;
-  }
 `
 
-const FormGroup = styled.div`
+const FieldGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
 `
 
-const Label = styled.label`
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-`
-
-const LabelRow = styled.div`
+const FieldRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
 `
 
-const ForgotLink = styled(Link)`
-  font-size: 0.75rem;
+const Label = styled.label`
+  font-size: 0.875rem;
   font-weight: 600;
-  color: #3b82f6;
-  transition: color 200ms;
-
-  &:hover {
-    color: #1e40af;
-  }
+  color: ${tokens.inkMid};
+  letter-spacing: 0.01em;
 `
 
-const InputWrapper = styled.div`
+const ForgotLink = styled(Link)`
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: ${tokens.teal};
+  text-decoration: none;
+  transition: color 150ms;
+
+  &:hover { color: ${tokens.tealDk}; text-decoration: underline; }
+`
+
+const InputBox = styled.div`
   position: relative;
 `
 
-const InputField = styled.input<{ $hasError: boolean }>`
+const Input = styled.input`
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 2px solid;
-  border-radius: 0.5rem;
-  transition: all 200ms;
-  color: #111827;
-  font-weight: 500;
   font-size: 1rem;
+  font-weight: 500;
+  color: ${tokens.ink};
+  background: ${tokens.surface};
+  border: 1.5px solid ${tokens.border};
+  border-radius: 10px;
+  transition: border-color 180ms, box-shadow 180ms, background 180ms;
+  outline: none;
+  box-sizing: border-box;
 
-  &::placeholder {
-    color: #9ca3af;
+  &::placeholder { color: ${tokens.inkXsoft}; }
+
+  &:hover:not(:disabled) {
+    border-color: #D6D3D1;
+    background: ${tokens.white};
   }
 
   &:focus {
-    outline: none;
+    border-color: ${tokens.borderFocus};
+    background: ${tokens.white};
+    box-shadow: 0 0 0 3px ${tokens.amberGlow};
   }
 
-  ${props =>
-    props.$hasError
-      ? `
-        border-color: #fca5a5;
-        background-color: rgba(254, 202, 202, 0.3);
-
-        &:focus {
-          border-color: #ef4444;
-          box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.1);
-        }
-      `
-      : `
-        border-color: #e5e7eb;
-        background-color: rgba(249, 250, 251, 0.4);
-
-        &:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        &:hover {
-          border-color: #d1d5db;
-        }
-      `}
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+  &[aria-invalid='true'] {
+    border-color: ${tokens.errorRed};
+    background: ${tokens.errorBg};
+    &:focus { box-shadow: 0 0 0 3px rgba(220,38,38,0.12); }
   }
+
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
 `
 
-const PasswordInput = styled(InputField)`
+const PasswordInput = styled(Input)`
   padding-right: 3rem;
 `
 
-const TogglePasswordButton = styled.button`
+const EyeBtn = styled.button`
   position: absolute;
-  right: 1rem;
+  right: 0.875rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #6b7280;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.25rem;
-  transition: color 200ms;
+  color: ${tokens.inkXsoft};
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  transition: color 150ms;
 
-  &:hover {
-    color: #374151;
-  }
-
-  &:disabled {
-    opacity: 0.4;
-  }
+  &:hover { color: ${tokens.inkMid}; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
 `
 
-const ErrorMessage = styled.p`
-  font-size: 0.875rem;
-  color: #dc2626;
+const ErrorMsg = styled.p`
+  font-size: 0.8125rem;
+  color: ${tokens.errorRed};
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.375rem;
+  margin: 0;
 `
 
-const Divider = styled.div`
-  position: relative;
-  margin: 1.75rem 0;
-`
-
-const DividerLine = styled.div`
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-
-  div {
-    width: 100%;
-    border-top: 1px solid #e5e7eb;
-  }
-`
-
-const DividerText = styled.div`
-  position: relative;
-  display: flex;
-  justify-content: center;
-
-  span {
-    padding: 0 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #6b7280;
-    background-color: white;
-  }
-`
-
-const SocialNotice = styled.p`
-  text-align: center;
-  font-size: 0.875rem;
-  color: #4b5563;
-  margin-bottom: 0.75rem;
-`
-
-const FooterSection = styled.div`
-  margin-top: 1.5rem;
-  text-align: center;
-  animation: fadeIn 0.5s ease-out 0.1s both;
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`
-
-const FooterText = styled.p`
+// ─── Submit Button ─────────────────────────────────────────────────────────────
+const SubmitBtn = styled.button`
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  margin-top: 0.5rem;
+  border-radius: 11px;
+  border: none;
   font-size: 1rem;
-  color: #4b5563;
-`
-
-const SignupLink = styled(Link)`
-  font-weight: 600;
-  color: #3b82f6;
-  transition: color 200ms;
-
-  &:hover {
-    color: #1e40af;
-  }
-`
-
-const SupportLink = styled(Link)`
-  display: block;
-  margin-top: 1.25rem;
-  font-size: 0.75rem;
-  color: #6b7280;
-  transition: color 200ms;
-  text-align: center;
-
-  &:hover {
-    color: #374151;
-  }
-`
-
-const ButtonWrapper = styled.div`
+  font-weight: 700;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  letter-spacing: 0.01em;
+  position: relative;
+  overflow: hidden;
+  transition: transform 150ms, box-shadow 150ms, opacity 150ms;
+
+  background: linear-gradient(135deg, ${tokens.amber} 0%, ${tokens.amberDk} 100%);
+  color: white;
+  box-shadow: 0 4px 16px ${tokens.amberGlow};
+
+  /* Shimmer overlay */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      rgba(255,255,255,0.25) 50%,
+      transparent 70%
+    );
+    background-size: 200% 100%;
+    opacity: 0;
+    transition: opacity 200ms;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(245,158,11,0.35);
+    &::before { opacity: 1; animation: ${shimmer} 0.8s linear; }
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px ${tokens.amberGlow};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  svg.spin { animation: ${spinAnim} 1s linear infinite; }
 `
 
+const ArrowIcon = styled(ArrowRight)`
+  transition: transform 200ms;
+  ${SubmitBtn}:hover:not(:disabled) & { transform: translateX(3px); }
+`
+
+// ─── Divider ───────────────────────────────────────────────────────────────────
+const Divider = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
+
+  &::before, &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: ${tokens.border};
+  }
+
+  span {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: ${tokens.inkXsoft};
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+`
+
+const SocialNote = styled.p`
+  text-align: center;
+  font-size: 0.875rem;
+  color: ${tokens.inkSoft};
+  margin: 0;
+  padding: 0.625rem 1rem;
+  background: ${tokens.surfaceAlt};
+  border-radius: 8px;
+  border: 1px dashed ${tokens.border};
+`
+
+// ─── Footer ────────────────────────────────────────────────────────────────────
+const Footer = styled.footer`
+  margin-top: 1.5rem;
+  text-align: center;
+  animation: ${fadeIn} 0.5s 0.15s ease both;
+`
+
+const FooterText = styled.p`
+  font-size: 0.9375rem;
+  color: ${tokens.inkSoft};
+  margin: 0 0 0.75rem;
+`
+
+const FooterLink = styled(Link)`
+  font-weight: 700;
+  color: ${tokens.teal};
+  text-decoration: none;
+  transition: color 150ms;
+  &:hover { color: ${tokens.tealDk}; text-decoration: underline; }
+`
+
+const SupportLink = styled(Link)`
+  display: inline-block;
+  font-size: 0.8125rem;
+  color: ${tokens.inkXsoft};
+  text-decoration: none;
+  transition: color 150ms;
+  &:hover { color: ${tokens.inkSoft}; }
+`
+
+// ─── Component ─────────────────────────────────────────────────────────────────
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const { mutate: login, isPending } = useLogin()
@@ -367,141 +457,126 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors },
     watch,
-  } = useForm<LoginFormData>({
+  } = useForm({
     resolver: zodResolver(loginSchema),
-    mode: 'onBlur',
+    mode: 'onSubmit',
   })
 
   const email = watch('email')
   const password = watch('password')
   const hasErrors = Object.keys(errors).length > 0
 
-  const onSubmit = (data: LoginFormData) => {
-    login({
-      email: data.email,
-      password: data.password,
-      staySignedIn: false,
-    })
+  const onSubmit = (data) => {
+    login({ email: data.email, password: data.password, staySignedIn: false })
   }
 
   return (
-    <Container>
-      <BackgroundAccent>
-        <BackgroundBlob1 />
-        <BackgroundBlob2 />
-      </BackgroundAccent>
+    <Page>
+      <Bubble1 />
+      <Bubble2 />
+      <Bubble3 />
 
-      <MainContainer>
-        <HeaderSection>
+      <Wrap>
+        <Header>
           <LogoWrapper>
             <LogoCircle>
-              <span>H</span>
+              <LogoHeartIcon />
             </LogoCircle>
+            <LogoWordmark>Honest<em>Need</em></LogoWordmark>
           </LogoWrapper>
-          <Title>Welcome Back</Title>
-          <Subtitle>Sign in to continue to HonestNeed</Subtitle>
-        </HeaderSection>
+          <Title>Welcome back</Title>
+          <Subtitle>Sign in to continue making a difference</Subtitle>
+        </Header>
 
-        <CardContainer>
           <Form onSubmit={handleSubmit(onSubmit)}>
-            {/* Email Field */}
-            <FormGroup>
-              <Label htmlFor="email">Email Address</Label>
-              <InputWrapper>
-                <InputField
+            {/* Email */}
+            <FieldGroup>
+              <Label htmlFor="email">Email address</Label>
+              <InputBox>
+                <Input
                   id="email"
                   type="email"
                   placeholder="you@example.com"
                   disabled={isPending}
-                  $hasError={!!errors.email}
-                  {...register('email')}
                   aria-invalid={errors.email ? 'true' : 'false'}
                   aria-describedby={errors.email ? 'email-error' : undefined}
+                  {...register('email')}
                 />
-              </InputWrapper>
+              </InputBox>
               {errors.email && (
-                <ErrorMessage id="email-error">
-                  <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                <ErrorMsg id="email-error">
+                  <AlertCircle size={14} style={{ flexShrink: 0 }} />
                   {errors.email.message}
-                </ErrorMessage>
+                </ErrorMsg>
               )}
-            </FormGroup>
+            </FieldGroup>
 
-            {/* Password Field */}
-            <FormGroup>
-              <LabelRow>
+            {/* Password */}
+            <FieldGroup>
+              <FieldRow>
                 <Label htmlFor="password">Password</Label>
-                <ForgotLink href="/forgot-password">Forgot?</ForgotLink>
-              </LabelRow>
-              <InputWrapper>
+                <ForgotLink href="/forgot-password">Forgot password?</ForgotLink>
+              </FieldRow>
+              <InputBox>
                 <PasswordInput
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   disabled={isPending}
-                  $hasError={!!errors.password}
-                  {...register('password')}
                   aria-invalid={errors.password ? 'true' : 'false'}
                   aria-describedby={errors.password ? 'password-error' : undefined}
+                  {...register('password')}
                 />
-                <TogglePasswordButton
+                <EyeBtn
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   disabled={isPending}
                   tabIndex={0}
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </TogglePasswordButton>
-              </InputWrapper>
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </EyeBtn>
+              </InputBox>
               {errors.password && (
-                <ErrorMessage id="password-error">
-                  <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                <ErrorMsg id="password-error">
+                  <AlertCircle size={14} style={{ flexShrink: 0 }} />
                   {errors.password.message}
-                </ErrorMessage>
+                </ErrorMsg>
               )}
-            </FormGroup>
+            </FieldGroup>
 
-            {/* Submit Button */}
-            <Button
+            {/* Submit */}
+            <SubmitBtn
               type="submit"
-              variant="primary"
-              size="md"
               disabled={isPending || !email || !password || hasErrors}
-              style={{ marginTop: '2rem', width: '100%' }}
             >
               {isPending ? (
-                <ButtonWrapper>
-                  <Loader size={18} style={{ animation: 'spin 1s linear infinite' }} />
-                  <span>Signing in...</span>
-                </ButtonWrapper>
+                <>
+                  <Loader size={18} className="spin" />
+                  Signing in…
+                </>
               ) : (
-                'Sign In'
+                <>
+                  Sign In
+                  <ArrowIcon size={18} />
+                </>
               )}
-            </Button>
+            </SubmitBtn>
           </Form>
 
-          <Divider>
-            <DividerLine>
-              <div />
-            </DividerLine>
-            <DividerText>
-              <span>OR</span>
-            </DividerText>
-          </Divider>
+          <Divider><span>or</span></Divider>
 
-          <SocialNotice>Social login coming soon</SocialNotice>
-        </CardContainer>
+          <SocialNote>Social login coming soon — check back!</SocialNote>
+        
 
-        <FooterSection>
+        <Footer>
           <FooterText>
-            Don't have an account?{' '}
-            <SignupLink href="/register">Create one</SignupLink>
+            Don&apos;t have an account?{' '}
+            <FooterLink href="/register">Create one free</FooterLink>
           </FooterText>
-        </FooterSection>
-
-        <SupportLink href="/contact">Need help? Contact support</SupportLink>
-      </MainContainer>
-    </Container>
+          <SupportLink href="/contact">Need help? Contact support</SupportLink>
+        </Footer>
+      </Wrap>
+    </Page>
   )
 }

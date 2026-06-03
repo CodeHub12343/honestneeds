@@ -19,13 +19,13 @@ const SectionHeader = styled.div`
 const SectionTitle = styled.h2`
   font-size: ${({ theme }) => theme?.typography?.sizes?.h2?.size || '32px'};
   font-weight: ${({ theme }) => theme?.typography?.weights?.bold || '700'};
-  color: ${({ theme }) => theme?.colors?.text || '#0F172A'};
+  color: #111827;
   margin-bottom: ${({ theme }) => theme?.spacing?.md || '12px'};
 `;
 
 const SectionSubtitle = styled.p`
   font-size: ${({ theme }) => theme?.typography?.sizes?.body?.size || '16px'};
-  color: ${({ theme }) => theme?.colors?.muted || '#64748B'};
+  color: #6B7280;
   max-width: 600px;
   margin: 0 auto;
 `;
@@ -41,11 +41,11 @@ const MetersGrid = styled.div`
 `;
 
 const MeterCard = styled(motion.div)`
-  background-color: #1E293B; /* Subtle dark background */
+  background-color: #F9FAFB;
   border-radius: ${({ theme }) => theme?.radii?.medium || '12px'};
   padding: ${({ theme }) => theme?.spacing?.xl || '24px'};
   border-left: 6px solid ${({ $accentColor }) => $accentColor};
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.15);
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -55,7 +55,7 @@ const MeterCard = styled(motion.div)`
 
   &:hover {
     transform: translateY(-6px);
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
   }
 `;
 
@@ -99,13 +99,13 @@ const MeterLabel = styled.span`
 const Headline = styled.h3`
   font-size: ${({ theme }) => theme?.typography?.sizes?.h4?.size || '20px'};
   font-weight: ${({ theme }) => theme?.typography?.weights?.bold || '700'};
-  color: #F8FAFC;
+  color: #1F2937;
   margin: 0;
 `;
 
 const Description = styled.p`
   font-size: ${({ theme }) => theme?.typography?.sizes?.small?.size || '14px'};
-  color: #94A3B8;
+  color: #6B7280;
   line-height: 1.6;
   margin: 0;
 `;
@@ -178,7 +178,7 @@ export default function FourWaysHelp() {
   };
 
   return (
-    <Section id="four-ways-help" $bgColor="bg">
+    <Section id="four-ways-help" style={{ backgroundColor: '#FFFFFF' }}>
       <Container>
         <SectionHeader>
           <SectionTitle>Four Ways Your Community Can Help</SectionTitle>

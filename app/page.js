@@ -6,6 +6,7 @@ import TrustStrip from '@/components/sections/TrustStrip';
 import HowItWorks from '@/components/sections/HowItWorks';
 import FeaturedCampaign from '@/components/sections/FeaturedCampaign';
 import CampaignFeed from '@/components/sections/CampaignFeed';
+import BannerSection from '@/components/sections/BannerSection';
 import BrowseByNeedType from '@/components/sections/BrowseByNeedType';
 import FourWaysHelp from '@/components/sections/FourWaysHelp';
 import HowPaymentsWork from '@/components/sections/HowPaymentsWork';
@@ -24,10 +25,10 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
-        <TrustStrip />
         <HowItWorks />
         <FeaturedCampaign />
         <CampaignFeed />
+        <BannerSection />
         <BrowseByNeedType />
         <FourWaysHelp />
         <HowPaymentsWork />

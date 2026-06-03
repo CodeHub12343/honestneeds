@@ -14,7 +14,7 @@ const GlobalStylesBase = createGlobalStyle`
   }
 
   body {
-    font-family: ${({ theme }) => theme?.typography?.bodyFont || 'Inter, sans-serif'};
+    font-family: ${({ theme }) => theme?.typography?.bodyFont || "'Georgia', 'Times New Roman', serif"};
     font-size: ${({ theme }) => theme?.typography?.sizes?.body?.size || '16px'};
     line-height: ${({ theme }) => theme?.typography?.sizes?.body?.lineHeight || '24px'};
     color: ${({ theme }) => theme?.colors?.text || '#0F172A'};
@@ -24,7 +24,7 @@ const GlobalStylesBase = createGlobalStyle`
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: ${({ theme }) => theme?.typography?.headingFont || 'Poppins, sans-serif'};
+    font-family: ${({ theme }) => theme?.typography?.headingFont || "'Georgia', 'Times New Roman', serif"};
     font-weight: ${({ theme }) => theme?.typography?.weights?.bold || '700'};
     color: ${({ theme }) => theme?.colors?.text || '#0F172A'};
   }
@@ -64,7 +64,7 @@ const GlobalStylesBase = createGlobalStyle`
   }
 
   button {
-    font-family: ${({ theme }) => theme?.typography?.bodyFont || 'Inter, sans-serif'};
+    font-family: ${({ theme }) => theme?.typography?.bodyFont || "'Georgia', 'Times New Roman', serif"};
     cursor: pointer;
     border: none;
     outline: none;
@@ -76,7 +76,7 @@ const GlobalStylesBase = createGlobalStyle`
   }
 
   input, textarea, select {
-    font-family: ${({ theme }) => theme?.typography?.bodyFont || 'Inter, sans-serif'};
+    font-family: ${({ theme }) => theme?.typography?.bodyFont || "'Georgia', 'Times New Roman', serif"};
     font-size: ${({ theme }) => theme?.typography?.sizes?.body?.size || '16px'};
   }
 
