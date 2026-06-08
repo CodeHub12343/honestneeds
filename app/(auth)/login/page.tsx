@@ -5,7 +5,8 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
-import { Eye, EyeOff, Loader, AlertCircle, ArrowRight, Heart } from 'lucide-react'
+import { Eye, EyeOff, Loader, AlertCircle, ArrowRight } from 'lucide-react'
+import Image from 'next/image'
 import Button from '@/components/ui/Button'
 import { loginSchema } from '@/utils/validationSchemas'
 import { useLogin } from '@/api/hooks/useAuth'
@@ -128,52 +129,20 @@ const Header = styled.header`
 const LogoWrapper = styled.div`
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
   margin-bottom: 1.5rem;
 `
 
-const LogoCircle = styled.div`
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, ${tokens.amber} 0%, ${tokens.amberDk} 100%);
-  box-shadow:
-    0 4px 14px ${tokens.amberGlow},
-    0 0 0 3px ${tokens.amberLt};
-  display: flex;
-  align-items: center;
-  justify-content: center;
+const LogoImg = styled.div`
   position: relative;
+  width: 160px;
+  height: 80px;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.12));
+  transition: transform 300ms ease, filter 300ms ease;
 
-  /* Inner glow */
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 2px;
-    border-radius: 9px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
-  }
-`
-
-const LogoHeartIcon = styled(Heart)`
-  color: white;
-  fill: white;
-  width: 22px;
-  height: 22px;
-  position: relative;
-  z-index: 1;
-`
-
-const LogoWordmark = styled.span`
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: ${tokens.ink};
-  letter-spacing: -0.02em;
-
-  em {
-    font-style: normal;
-    color: ${tokens.amber};
+  &:hover {
+    transform: scale(1.04);
+    filter: drop-shadow(0 6px 18px rgba(0,0,0,0.18));
   }
 `
 
@@ -479,10 +448,15 @@ export default function LoginPage() {
       <Wrap>
         <Header>
           <LogoWrapper>
-            <LogoCircle>
-              <LogoHeartIcon />
-            </LogoCircle>
-            <LogoWordmark>Honest<em>Need</em></LogoWordmark>
+            <LogoImg>
+              <Image
+                src="/1000019752.png"
+                alt="HonestNeed — Get Your Needs Filled"
+                fill
+                style={{ objectFit: 'contain' }}
+                priority
+              />
+            </LogoImg>
           </LogoWrapper>
           <Title>Welcome back</Title>
           <Subtitle>Sign in to continue making a difference</Subtitle>

@@ -20,6 +20,12 @@ import { useCampaigns, useDeleteCampaign, usePublishCampaign, usePauseCampaign }
 import { useAuthStore } from '@/store/authStore'
 
 // Styled Components
+const PageWrapper = styled.div`
+  background: #F7F5F1;
+  min-height: 100vh;
+  width: 100%;
+`
+
 const PageContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -565,38 +571,43 @@ export default function CreatorCampaignsPage() {
 
   if (isLoading) {
     return (
-      <PageContainer>
-        <LoadingContainer>
-          <Loader size={24} className="animate-spin" />
-          Loading your campaigns...
-        </LoadingContainer>
-      </PageContainer>
+      <PageWrapper>
+        <PageContainer>
+          <LoadingContainer>
+            <Loader size={24} className="animate-spin" />
+            Loading your campaigns...
+          </LoadingContainer>
+        </PageContainer>
+      </PageWrapper>
     )
   }
 
   if (error) {
     return (
-      <PageContainer>
-        <EmptyState>
-          <AlertCircle size={48} style={{ color: '#dc2626', marginBottom: '16px' }} />
-          <EmptyTitle>Failed to Load Campaigns</EmptyTitle>
-          <EmptyMessage>Please refresh and try again</EmptyMessage>
-          <CreateButton onClick={() => refetch()}>Try Again</CreateButton>
-        </EmptyState>
-      </PageContainer>
+      <PageWrapper>
+        <PageContainer>
+          <EmptyState>
+            <AlertCircle size={48} style={{ color: '#dc2626', marginBottom: '16px' }} />
+            <EmptyTitle>Failed to Load Campaigns</EmptyTitle>
+            <EmptyMessage>Please refresh and try again</EmptyMessage>
+            <CreateButton onClick={() => refetch()}>Try Again</CreateButton>
+          </EmptyState>
+        </PageContainer>
+      </PageWrapper>
     )
   }
 
   return (
-    <PageContainer>
-      {/* Header */}
-      <Header>
-        <PageTitle>My Campaigns</PageTitle>
-        <CreateButton onClick={() => router.push('/campaigns/new')}>
-          <Plus size={18} />
-          Create Campaign
-        </CreateButton>
-      </Header>
+    <PageWrapper>
+      <PageContainer>
+        {/* Header */}
+        <Header>
+          <PageTitle>My Campaigns</PageTitle>
+          <CreateButton onClick={() => router.push('/campaigns/new')}>
+            <Plus size={18} />
+            Create Campaign
+          </CreateButton>
+        </Header>
 
       {/* Stats */}
       <StatsBar>
@@ -791,6 +802,7 @@ export default function CreatorCampaignsPage() {
           )}
         </>
       )}
-    </PageContainer>
+      </PageContainer>
+    </PageWrapper>
   )
 }

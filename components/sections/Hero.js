@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -503,6 +504,65 @@ const SocialProofText = styled.p`
   }
 `;
 
+const VideoOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+`;
+
+const VideoContainer = styled.div`
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  background: #000;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  video {
+    width: 100%;
+    aspect-ratio: 16/9;
+    display: block;
+  }
+`;
+
+const CloseButton = styled.button`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  transition: background 0.15s;
+  z-index: 10;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
+`;
+
 // ─── Framer Motion Variants ───────────────────────────────────────────────────
 
 const containerVariants = {
@@ -541,6 +601,7 @@ const slideInRight = {
 
 export default function Hero() {
   const router = useRouter();
+  const [showVideo, setShowVideo] = useState(false);
 
   const handleStartCampaign = () => router.push('/login');
   const handleBrowseNeeds = () => router.push('/sponsorships');
@@ -709,6 +770,7 @@ export default function Hero() {
               transition={{ delay: 1 }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => setShowVideo(true)}
             >
               <FiPlay />
               Play 60s demo
@@ -717,6 +779,20 @@ export default function Hero() {
           </IllustrationContainer>
         </HeroVisual>
       </HeroContainer>
+
+      {showVideo && (
+        <VideoOverlay onClick={() => setShowVideo(false)}>
+          <VideoContainer onClick={(e) => e.stopPropagation()}>
+            <CloseButton onClick={() => setShowVideo(false)} aria-label="Close video">✕</CloseButton>
+            <video
+              src="https://res.cloudinary.com/dctvil2gu/video/upload/v1780898911/Honestneed_fgty7u.mp4"
+              controls
+              autoPlay
+              playsInline
+            />
+          </VideoContainer>
+        </VideoOverlay>
+      )}
     </HeroSection>
   );
 }

@@ -1,7 +1,7 @@
 'use client'
 
-import styled from 'styled-components'
-import { useState, useEffect } from 'react'
+import styled, { keyframes, createGlobalStyle } from 'styled-components'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -16,6 +16,17 @@ import {
   Copy,
   Check,
   Briefcase,
+  Heart,
+  ChevronDown,
+  Mail,
+  Link2,
+  ArrowUpRight,
+  Sparkles,
+  Clock,
+  Tag,
+  BookOpen,
+  Gift,
+  Zap,
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import {
@@ -44,1295 +55,1069 @@ import PrayerModal from '@/components/campaign/PrayerModal'
 import Button from '@/components/ui/Button'
 import { useAuthStore } from '@/store/authStore'
 
-// Styled Components
-const PageContainer = styled.div`
+// ─── Animations ────────────────────────────────────────────────────────────────
+
+const fadeUp = keyframes`
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+`
+
+const shimmer = keyframes`
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+`
+
+const pulse = keyframes`
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+`
+
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+`
+
+const progressFill = keyframes`
+  from { width: 0%; }
+  to   { width: var(--progress); }
+`
+
+// ─── Global Reset ──────────────────────────────────────────────────────────────
+
+const GlobalStyle = createGlobalStyle`
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+`
+
+// ─── Tokens ────────────────────────────────────────────────────────────────────
+
+const tokens = {
+  sand:    '#FAF8F4',
+  cream:   '#F3EFE8',
+  clay:    '#E8E0D4',
+  slate:   '#2C2B28',
+  charcoal:'#4A4845',
+  muted:   '#8A857D',
+  border:  '#DDD8CF',
+  accent:  '#C4622D',
+  accentLight: '#FAEAE1',
+  accentDark:  '#9E4A1E',
+  blue:    '#1D4ED8',
+  blueLight:'#EFF6FF',
+  success: '#166534',
+  successLight: '#F0FDF4',
+  white:   '#FFFFFF',
+}
+
+// ─── Layout ────────────────────────────────────────────────────────────────────
+
+const Page = styled.div`
   min-height: 100vh;
-  background-color: #f9fafb;
-  width: 100%;
-  box-sizing: border-box;
+  background: ${tokens.sand};
+  font-family: 'DM Sans', sans-serif;
+  color: ${tokens.slate};
+  -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
-  overflow-y: visible;
 `
 
-const HeroSection = styled.div`
+// ─── Hero ──────────────────────────────────────────────────────────────────────
+
+const HeroWrap = styled.div`
   position: relative;
-  height: 16rem;
-  background-color: #d1d5db;
+  height: clamp(280px, 45vw, 520px);
   overflow: hidden;
-
-  @media (min-width: 480px) {
-    height: 20rem;
-  }
-
-  @media (min-width: 640px) {
-    height: 28rem;
-  }
-
-  @media (min-width: 1024px) {
-    height: 32rem;
-  }
+  background: ${tokens.slate};
 `
 
-const HeroOverlay = styled.div`
+const HeroImg = styled.div`
+  position: absolute;
+  inset: 0;
+  img { object-fit: cover; transition: transform 8s ease; }
+  &:hover img { transform: scale(1.04); }
+`
+
+const HeroScrim = styled.div`
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.7) 0%,
-    rgba(0, 0, 0, 0.5) 50%,
-    rgba(0, 0, 0, 0.2) 100%
+    160deg,
+    rgba(0,0,0,0.12) 0%,
+    rgba(0,0,0,0.35) 50%,
+    rgba(0,0,0,0.78) 100%
   );
 `
 
-const HeroContent = styled.div`
+const HeroBody = styled.div`
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: flex-end;
-`
-
-const HeroGradient = styled.div`
-  width: 100%;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.4));
-  padding: 1rem;
-  display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  height: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
-
-  @media (max-width: 380px) {
-    padding: 0.75rem;
-  }
-
-  @media (min-width: 480px) {
-    padding: 1.5rem;
-  }
-
-  @media (min-width: 640px) {
-    padding: 2rem;
-  }
-
-  h1 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: white;
-    margin-bottom: 0.5rem;
-    line-height: 1.2;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    word-wrap: break-word;
-    hyphens: auto;
-    overflow-wrap: break-word;
-    word-break: break-word;
-
-    @media (max-width: 380px) {
-      font-size: 1.25rem;
-      margin-bottom: 0.375rem;
-    }
-
-    @media (min-width: 480px) {
-      font-size: 1.875rem;
-    }
-
-    @media (min-width: 640px) {
-      font-size: 2.5rem;
-    }
-  }
-
-  p {
-    color: #e5e7eb;
-    font-size: 0.875rem;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    word-break: break-word;
-    overflow-wrap: break-word;
-
-    @media (max-width: 380px) {
-      font-size: 0.75rem;
-    }
-
-    @media (min-width: 640px) {
-      font-size: 1rem;
-    }
-  }
-
-  a {
-    color: white;
-    font-weight: 600;
-    text-decoration: none;
-    transition: color 200ms;
-    word-break: break-word;
-
-    &:hover {
-      color: #f3f4f6;
-    }
-  }
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  animation: ${fadeUp} 0.6s ease both;
 `
 
-const MainContent = styled.div`
-  max-width: 1400px;
+const HeroBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: ${tokens.accent};
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 100px;
+  margin-bottom: 1rem;
+  width: fit-content;
+`
+
+const HeroTitle = styled.h1`
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1.6rem, 4.5vw, 3rem);
+  font-weight: 800;
+  color: white;
+  line-height: 1.15;
+  margin: 0 0 0.75rem;
+  max-width: 700px;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+`
+
+const HeroMeta = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(255,255,255,0.82);
+  font-size: 0.9rem;
+`
+
+const HeroCreator = styled(Link)`
+  color: white;
+  font-weight: 600;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  &:hover { text-decoration: underline; }
+`
+
+const HeroSeparator = styled.span`
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+`
+
+// ─── Quick Stats Bar ────────────────────────────────────────────────────────────
+
+const QuickStatsBar = styled.div`
+  background: ${tokens.white};
+  border-bottom: 1px solid ${tokens.border};
+  padding: 0 clamp(1rem, 4vw, 2rem);
+`
+
+const QuickStatsInner = styled.div`
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 1.5rem 0.75rem;
-  width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
-  overflow-y: visible;
-
-  @media (max-width: 360px) {
-    padding: 1rem 0.5rem;
-  }
-
-  @media (min-width: 480px) {
-    padding: 2rem 0.875rem;
-  }
-
-  @media (min-width: 640px) {
-    padding: 2.5rem 1.5rem;
-  }
-
-  @media (min-width: 1024px) {
-    padding: 3rem 2rem;
-  }
+  display: flex;
+  overflow-x: auto;
+  gap: 0;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
 `
 
-const GridLayout = styled.div`
+const QuickStat = styled.div`
+  flex: 1;
+  min-width: 110px;
+  padding: 1rem 1.25rem;
+  border-right: 1px solid ${tokens.border};
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  &:last-child { border-right: none; }
+
+  @media (min-width: 768px) { min-width: 140px; }
+`
+
+const QuickStatLabel = styled.span`
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: ${tokens.muted};
+`
+
+const QuickStatValue = styled.span`
+  font-family: 'Syne', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${tokens.slate};
+  line-height: 1;
+`
+
+const QuickStatSub = styled.span`
+  font-size: 0.7rem;
+  color: ${tokens.muted};
+`
+
+// ─── Main Layout ───────────────────────────────────────────────────────────────
+
+const Main = styled.main`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2rem);
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.75rem;
+  gap: 1.5rem;
   align-items: start;
-  width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
-
-  @media (max-width: 380px) {
-    gap: 1rem;
-  }
-
-  @media (min-width: 640px) {
-    gap: 2rem;
-  }
 
   @media (min-width: 1024px) {
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr 360px;
     gap: 2.5rem;
   }
 `
 
-const MainColumn = styled.div`
+// ─── Left Column ───────────────────────────────────────────────────────────────
+
+const LeftCol = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
-
-  @media (max-width: 380px) {
-    gap: 1rem;
-  }
-
-  @media (min-width: 480px) {
-    gap: 1.625rem;
-  }
-
-  @media (min-width: 640px) {
-    gap: 1.875rem;
-  }
-
-  @media (min-width: 1024px) {
-    gap: 2rem;
-  }
+  min-width: 0;
 `
 
-const Sidebar = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
-
-  @media (max-width: 380px) {
-    gap: 1rem;
-  }
-
-  @media (min-width: 640px) {
-    gap: 1.625rem;
-  }
-
-  @media (min-width: 1024px) {
-    gap: 1.75rem;
-  }
-`
+// ─── Card ──────────────────────────────────────────────────────────────────────
 
 const Card = styled.div`
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  padding: 1rem;
-  transition: box-shadow 200ms ease;
-  width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
-  overflow-y: visible;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+  background: ${tokens.white};
+  border: 1px solid ${tokens.border};
+  border-radius: 16px;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  animation: ${fadeUp} 0.5s ease both;
+  animation-delay: ${p => p.$delay || '0ms'};
+  overflow: hidden;
+`
 
-  @media (max-width: 380px) {
-    padding: 0.75rem;
-    border-radius: 0.375rem;
-  }
+const CardTitle = styled.h2`
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: ${tokens.slate};
+  margin: 0 0 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`
 
-  @media (min-width: 480px) {
-    padding: 1.5rem;
-  }
+const CardTitleIcon = styled.span`
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: ${p => p.$bg || tokens.accentLight};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${p => p.$color || tokens.accent};
+  flex-shrink: 0;
+`
 
-  @media (min-width: 640px) {
-    padding: 2rem;
-    box-shadow: 0 1px 2px -1px rgba(0, 0, 0, 0.1), 0 1px 3px -1px rgba(0, 0, 0, 0.1);
-  }
+// ─── Progress ──────────────────────────────────────────────────────────────────
 
-  &:hover {
-    @media (min-width: 640px) {
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-  }
+const ProgressSection = styled.div`
+  margin-bottom: 1.5rem;
+`
 
-  h2 {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 1rem;
-    letter-spacing: -0.5px;
-    word-break: break-word;
+const ProgressNumbers = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+`
 
-    @media (max-width: 380px) {
-      font-size: 1.1rem;
-      margin-bottom: 0.75rem;
-    }
+const RaisedAmount = styled.span`
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  color: ${tokens.slate};
+  line-height: 1;
+`
 
-    @media (min-width: 640px) {
-      font-size: 1.5rem;
-      margin-bottom: 1.5rem;
-    }
-  }
+const GoalAmount = styled.span`
+  font-size: 0.9rem;
+  color: ${tokens.muted};
+  font-weight: 400;
+`
 
-  h3 {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #111827;
-    margin-bottom: 0.75rem;
-    letter-spacing: -0.25px;
-    word-break: break-word;
+const ProgressTrack = styled.div`
+  height: 10px;
+  background: ${tokens.cream};
+  border-radius: 100px;
+  overflow: hidden;
+  position: relative;
+`
 
-    @media (max-width: 380px) {
-      font-size: 0.95rem;
-      margin-bottom: 0.5rem;
-    }
-
-    @media (min-width: 640px) {
-      font-size: 1.125rem;
-      margin-bottom: 1rem;
-    }
+const ProgressFill = styled.div`
+  height: 100%;
+  background: linear-gradient(90deg, ${tokens.accent}, ${tokens.accentDark});
+  border-radius: 100px;
+  --progress: ${p => Math.min(p.$pct, 100)}%;
+  width: var(--progress);
+  animation: ${progressFill} 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 0.3s;
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 4px; height: 100%;
+    background: white;
+    opacity: 0.4;
+    border-radius: 100px;
   }
 `
 
-const MetricsGrid = styled.div`
+const ProgressPct = styled.span`
+  font-family: 'Syne', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: ${tokens.accent};
+  margin-top: 0.4rem;
+  display: block;
+`
+
+// ─── Metrics Strip ─────────────────────────────────────────────────────────────
+
+const MetricsStrip = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.875rem;
-  margin-top: 1.75rem;
-  width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
-
-  @media (max-width: 380px) {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-    margin-top: 1.5rem;
-  }
-
-  @media (min-width: 480px) {
-    gap: 1rem;
-    margin-top: 2rem;
-  }
-
-  @media (min-width: 640px) {
-    gap: 1.125rem;
-    margin-top: 2.25rem;
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(6, 1fr);
-    gap: 1.25rem;
-  }
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid ${tokens.clay};
 `
 
-const MetricCard = styled.div`
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-  border-radius: 0.5rem;
-  padding: 0.875rem;
+const Metric = styled.div`
+  background: ${tokens.sand};
+  border: 1px solid ${tokens.border};
+  border-radius: 12px;
+  padding: 0.875rem 1rem;
   text-align: center;
-  border: 1px solid #e5e7eb;
-  transition: all 200ms ease;
-  overflow-x: hidden;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-
-  @media (max-width: 380px) {
-    padding: 0.75rem;
-  }
-
-  @media (min-width: 640px) {
-    padding: 1.125rem;
-  }
-
-  &:hover {
-    border-color: #d1d5db;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  }
-
-  p:first-child {
-    font-size: 0.7rem;
-    color: #6b7280;
-    margin-bottom: 0.375rem;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    word-break: break-word;
-
-    @media (max-width: 380px) {
-      font-size: 0.65rem;
-      margin-bottom: 0.25rem;
-    }
-
-    @media (min-width: 640px) {
-      font-size: 0.8rem;
-      margin-bottom: 0.5rem;
-    }
-  }
-
-  p:last-child {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #111827;
-    line-height: 1;
-    word-break: break-word;
-    overflow-wrap: break-word;
-
-    @media (max-width: 380px) {
-      font-size: 1rem;
-    }
-
-    @media (min-width: 640px) {
-      font-size: 1.625rem;
-    }
-  }
 `
 
-const DescriptionContent = styled.div`
-  color: #374151;
-  line-height: 1.7;
-  font-size: 0.875rem;
-  letter-spacing: 0.3px;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
-
-  @media (max-width: 380px) {
-    font-size: 0.8rem;
-    line-height: 1.6;
-    letter-spacing: 0.2px;
-  }
-
-  @media (min-width: 640px) {
-    font-size: 0.95rem;
-    line-height: 1.75;
-    letter-spacing: 0.2px;
-  }
-
-  p {
-    white-space: pre-wrap;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    margin-bottom: 1rem;
-
-    @media (max-width: 380px) {
-      margin-bottom: 0.75rem;
-    }
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
+const MetricVal = styled.div`
+  font-family: 'Syne', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: ${tokens.slate};
+  line-height: 1;
+  margin-bottom: 4px;
 `
 
-const CTAButtonsContainer = styled(Card)`
-  position: sticky;
-  top: 0.5rem;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
-
-  @media (max-width: 380px) {
-    gap: 0.375rem;
-    padding: 0.75rem;
-    top: 0.25rem;
-  }
-
-  @media (min-width: 480px) {
-    gap: 0.625rem;
-    padding: 1.25rem;
-    top: 1rem;
-  }
-
-  @media (min-width: 640px) {
-    top: 1.5rem;
-    gap: 0.75rem;
-    padding: 1.5rem;
-  }
-
-  @media (min-width: 1024px) {
-    top: 5rem;
-    box-shadow: 0 1px 2px -1px rgba(0, 0, 0, 0.1), 0 1px 3px -1px rgba(0, 0, 0, 0.1);
-  }
-
-  button {
-    min-height: 44px;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    
-    @media (max-width: 380px) {
-      min-height: 40px;
-      font-size: 0.875rem;
-      padding: 0.5rem;
-    }
-
-    @media (min-width: 640px) {
-      min-height: 48px;
-    }
-  }
-`
-
-const ShareButtonsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-  background-color: #f9fafb;
-  padding: 0.625rem;
-  border-radius: 0.375rem;
-  border: 1px solid #e5e7eb;
-
-  @media (max-width: 380px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.375rem;
-    padding: 0.5rem;
-  }
-
-  @media (min-width: 480px) {
-    gap: 0.625rem;
-    padding: 0.75rem;
-  }
-`
-
-const ShareButton = styled.button`
-  padding: 0.6rem;
-  min-height: 40px;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  background-color: white;
-  cursor: pointer;
-  transition: all 200ms ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  font-feature-settings: 'tnum';
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-
-  @media (max-width: 380px) {
-    padding: 0.5rem;
-    min-height: 36px;
-    font-size: 0.65rem;
-  }
-
-  @media (min-width: 640px) {
-    padding: 0.75rem;
-    min-height: 44px;
-    font-size: 0.875rem;
-  }
-
-  &:hover {
-    background-color: #f3f4f6;
-    border-color: #9ca3af;
-  }
-
-  &:active {
-    background-color: #e5e7eb;
-  }
-
-  &:focus {
-    outline: 2px solid #667eea;
-    outline-offset: 2px;
-  }
-`
-
-const ReportButton = styled.button`
-  width: 100%;
-  padding: 0.6rem 0.75rem;
-  min-height: 40px;
-  font-size: 0.75rem;
-  color: #dc2626;
-  background-color: white;
-  border: 1px solid #fecaca;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  transition: all 200ms ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
+const MetricLabel = styled.div`
+  font-size: 0.7rem;
   font-weight: 500;
-  box-sizing: border-box;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-
-  @media (max-width: 380px) {
-    padding: 0.5rem 0.5rem;
-    min-height: 36px;
-    font-size: 0.65rem;
-    gap: 0.25rem;
-  }
-
-  @media (min-width: 640px) {
-    padding: 0.6rem 1rem;
-    min-height: 44px;
-    font-size: 0.875rem;
-    gap: 0.5rem;
-  }
-
-  &:hover {
-    background-color: #fef2f2;
-    border-color: #f87171;
-  }
-
-  &:active {
-    background-color: #fee2e2;
-  }
-
-  &:focus {
-    outline: 2px solid #dc2626;
-    outline-offset: 2px;
-  }
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: ${tokens.muted};
 `
 
-const CampaignDetailsCard = styled(Card)`
-  div {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.625rem;
-    margin-bottom: 0.875rem;
-    padding-bottom: 0.875rem;
-    border-bottom: 1px solid #f3f4f6;
-    min-width: 0;
-    flex-wrap: wrap;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    box-sizing: border-box;
+// ─── Description ───────────────────────────────────────────────────────────────
 
-    @media (max-width: 380px) {
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
-      padding-bottom: 0.75rem;
-    }
-
-    @media (min-width: 640px) {
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-      padding-bottom: 1rem;
-    }
-
-    &:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-
-    svg {
-      color: #6b7280;
-      flex-shrink: 0;
-      margin-top: 0.125rem;
-      width: 16px;
-      height: 16px;
-      transition: color 200ms ease;
-
-      @media (max-width: 380px) {
-        width: 14px;
-        height: 14px;
-      }
-
-      @media (min-width: 640px) {
-        width: 18px;
-        height: 18px;
-      }
-    }
-
-    > div {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      flex: 1;
-      min-width: 0;
-      box-sizing: border-box;
-
-      p:first-child {
-        font-size: 0.7rem;
-        color: #9ca3af;
-        margin-bottom: 0.25rem;
-        font-weight: 500;
-        letter-spacing: 0.3px;
-        text-transform: uppercase;
-        word-break: break-word;
-
-        @media (max-width: 380px) {
-          font-size: 0.65rem;
-          margin-bottom: 0.15rem;
-        }
-
-        @media (min-width: 640px) {
-          font-size: 0.75rem;
-          margin-bottom: 0.375rem;
-        }
-      }
-
-      p:last-child {
-        font-size: 0.85rem;
-        font-weight: 500;
-        color: #111827;
-        text-transform: capitalize;
-        line-height: 1.4;
-        word-break: break-word;
-        overflow-wrap: break-word;
-
-        @media (max-width: 380px) {
-          font-size: 0.8rem;
-        }
-
-        @media (min-width: 640px) {
-          font-size: 0.95rem;
-        }
-      }
-    }
-  }
+const Description = styled.div`
+  color: ${tokens.charcoal};
+  font-size: clamp(0.9rem, 2vw, 0.975rem);
+  line-height: 1.85;
+  font-weight: 300;
+  white-space: pre-wrap;
+  word-break: break-word;
 `
 
-const TagsContainer = styled.div`
-  padding-top: 0.75rem;
-  margin-top: 0.75rem;
-  border-top: 2px solid #f3f4f6;
-  width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
+// ─── Tags ──────────────────────────────────────────────────────────────────────
 
-  @media (max-width: 380px) {
-    padding-top: 0.5rem;
-    margin-top: 0.5rem;
-  }
-
-  @media (min-width: 640px) {
-    padding-top: 1rem;
-    margin-top: 1rem;
-    border-top-width: 1px;
-  }
-
-  p {
-    font-size: 0.7rem;
-    color: #9ca3af;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
-    word-break: break-word;
-
-    @media (max-width: 380px) {
-      font-size: 0.65rem;
-      margin-bottom: 0.375rem;
-    }
-
-    @media (min-width: 640px) {
-      font-size: 0.75rem;
-      margin-bottom: 0.75rem;
-    }
-  }
-`
-
-const TagsWrapper = styled.div`
+const TagsRow = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  overflow-x: hidden;
-  width: 100%;
-  box-sizing: border-box;
-
-  @media (max-width: 380px) {
-    gap: 0.375rem;
-  }
-
-  @media (min-width: 640px) {
-    gap: 0.625rem;
-  }
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid ${tokens.clay};
 `
 
-const Tag = styled.span`
+const TagChip = styled.span`
   display: inline-flex;
   align-items: center;
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  color: #0c4a6e;
-  padding: 0.3rem 0.625rem;
-  border-radius: 9999px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  border: 1px solid #7dd3fc;
-  transition: all 200ms ease;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-  word-break: break-word;
-
-  @media (max-width: 380px) {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.65rem;
-  }
-
-  @media (min-width: 640px) {
-    padding: 0.35rem 0.875rem;
-    font-size: 0.8rem;
-  }
-
-  &:hover {
-    background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
-    border-color: #38bdf8;
-  }
+  gap: 4px;
+  background: ${tokens.cream};
+  border: 1px solid ${tokens.border};
+  color: ${tokens.charcoal};
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 100px;
+  cursor: default;
+  transition: background 150ms;
+  &:hover { background: ${tokens.clay}; }
 `
 
-const LastUpdatedCard = styled.div`
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  border-radius: 0.5rem;
-  padding: 0.875rem;
-  text-align: center;
-  font-size: 0.7rem;
-  color: #4b5563;
+// ─── Details List ──────────────────────────────────────────────────────────────
+
+const DetailsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+`
+
+const DetailsRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.875rem 0;
+  border-bottom: 1px solid ${tokens.clay};
+  &:last-child { border-bottom: none; }
+`
+
+const DetailsIcon = styled.div`
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: ${p => p.$bg || tokens.cream};
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  border: 1px solid #d1d5db;
-  transition: all 200ms ease;
+  color: ${p => p.$color || tokens.charcoal};
+  flex-shrink: 0;
+`
 
-  @media (min-width: 640px) {
-    padding: 1rem;
-    font-size: 0.8rem;
-    gap: 0.625rem;
-  }
+const DetailsText = styled.div`
+  flex: 1;
+  min-width: 0;
+`
 
-  &:hover {
-    background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
-    border-color: #9ca3af;
-  }
+const DetailsLabel = styled.div`
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: ${tokens.muted};
+  margin-bottom: 2px;
+`
 
-  svg {
-    width: 0.8rem;
-    height: 0.8rem;
-    flex-shrink: 0;
-    animation: spin 2s linear infinite;
+const DetailsValue = styled.div`
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: ${tokens.slate};
+  text-transform: capitalize;
+`
 
-    @media (min-width: 640px) {
-      width: 0.95rem;
-      height: 0.95rem;
-    }
-  }
+// ─── Sidebar ───────────────────────────────────────────────────────────────────
 
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
+const RightCol = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  @media (min-width: 1024px) {
+    position: sticky;
+    top: 1.5rem;
   }
 `
 
-const RelatedCampaignsContainer = styled(Card)`
-  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-  border: 1px solid #e5e7eb;
+// ─── CTA Card ──────────────────────────────────────────────────────────────────
+
+const CTACard = styled(Card)`
+  border: none;
+  background: ${tokens.white};
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.04),
+    0 8px 24px rgba(0,0,0,0.08);
+  padding: 1.5rem;
+
+  @media (min-width: 1024px) {
+    position: sticky;
+    top: 1.5rem;
+  }
+`
+
+const PrimaryBtn = styled.button`
   width: 100%;
-  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: ${tokens.accent};
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  padding: 0.9rem 1.5rem;
+  cursor: pointer;
+  transition: background 150ms, transform 100ms;
+  &:hover { background: ${tokens.accentDark}; }
+  &:active { transform: scale(0.98); }
 
-  h2 {
-    margin-bottom: 1.25rem;
-    position: relative;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #f3f4f6;
+  @media (hover: none) { &:hover { background: ${tokens.accent}; } }
+`
 
-    @media (min-width: 640px) {
-      margin-bottom: 1.75rem;
-      padding-bottom: 1.25rem;
-      border-bottom-width: 1px;
-    }
+const SecondaryBtn = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: ${tokens.slate};
+  font-family: 'Syne', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1.5px solid ${tokens.border};
+  border-radius: 12px;
+  padding: 0.8rem 1.25rem;
+  cursor: pointer;
+  transition: background 150ms, border-color 150ms, transform 100ms;
+  &:hover {
+    background: ${tokens.cream};
+    border-color: ${tokens.clay};
+  }
+  &:active { transform: scale(0.98); }
+`
+
+const ShareGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.625rem;
+`
+
+const ShareBtn = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: ${tokens.cream};
+  border: 1px solid ${tokens.border};
+  border-radius: 10px;
+  padding: 0.7rem;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: ${tokens.charcoal};
+  transition: background 150ms, border-color 150ms;
+  &:hover {
+    background: ${tokens.clay};
+    border-color: ${tokens.clay};
   }
 `
 
-const RelatedCampaignsGrid = styled.div`
+const Divider = styled.hr`
+  border: none;
+  border-top: 1px solid ${tokens.clay};
+  margin: 0.25rem 0;
+`
+
+const ReportBtn = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: ${tokens.muted};
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: color 150ms, background 150ms;
+  &:hover {
+    color: #dc2626;
+    background: #fef2f2;
+  }
+`
+
+// ─── Budget Info Pill ──────────────────────────────────────────────────────────
+
+const BudgetPill = styled.div`
+  background: linear-gradient(135deg, ${tokens.accentLight}, #fff);
+  border: 1px solid #f0c9b5;
+  border-radius: 12px;
+  padding: 0.875rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+`
+
+const BudgetMain = styled.div`
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: ${tokens.accent};
+`
+
+const BudgetSub = styled.div`
+  font-size: 0.75rem;
+  color: ${tokens.muted};
+  margin-top: 2px;
+`
+
+// ─── Last Updated ──────────────────────────────────────────────────────────────
+
+const UpdatedPill = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: ${tokens.muted};
+  padding: 0.5rem;
+
+  svg { animation: ${spin} 3s linear infinite; }
+`
+
+// ─── Related ───────────────────────────────────────────────────────────────────
+
+const RelatedGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.25rem;
-  width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
-
-  @media (min-width: 480px) {
-    gap: 1.375rem;
-  }
+  gap: 1rem;
 
   @media (min-width: 640px) {
-    gap: 1.5rem;
-  }
-
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.75rem;
-  }
-`
-
-const VolunteerSection = styled.div`
-  border-top: 2px solid #e5e7eb;
-  padding-top: 2rem;
-  margin-top: 2rem;
-  width: 100%;
-  box-sizing: border-box;
-
-  @media (min-width: 480px) {
-    margin-left: 0;
-    margin-right: 0;
-    padding-left: 0;
-    padding-right: 0;
-    padding-top: 2.25rem;
-    margin-top: 2.25rem;
-  }
-
-  @media (min-width: 640px) {
-    padding-top: 2.5rem;
-    margin-top: 2.5rem;
-    border-top-width: 1px;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   @media (min-width: 1024px) {
-    padding-top: 3rem;
-    margin-top: 3rem;
+    grid-template-columns: repeat(3, 1fr);
   }
 `
+
+// ─── Volunteer Section ─────────────────────────────────────────────────────────
+
+const VolunteerWrap = styled.div`
+  border-top: 1px solid ${tokens.border};
+  padding-top: 2rem;
+  margin-top: 1rem;
+`
+
+// ─── Skeleton ──────────────────────────────────────────────────────────────────
+
+const SkeletonBase = styled.div`
+  background: linear-gradient(
+    90deg,
+    ${tokens.cream} 25%,
+    ${tokens.clay} 50%,
+    ${tokens.cream} 75%
+  );
+  background-size: 800px 100%;
+  animation: ${shimmer} 1.5s infinite linear;
+  border-radius: 8px;
+`
+
+const SkeletonHero = styled(SkeletonBase)`
+  height: clamp(280px, 45vw, 520px);
+  border-radius: 0;
+`
+
+// ─── Section Divider ──────────────────────────────────────────────────────────
+
+const SectionLabel = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0 1rem;
+
+  &::before, &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: ${tokens.border};
+  }
+
+  span {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: ${tokens.muted};
+    white-space: nowrap;
+  }
+`
+
+// ─── Sticky Mobile CTA Bar ────────────────────────────────────────────────────
+
+const MobileCtaBar = styled.div`
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid ${tokens.border};
+  padding: 0.875rem 1rem calc(0.875rem + env(safe-area-inset-bottom));
+  display: flex;
+  gap: 0.75rem;
+  z-index: 100;
+
+  @media (min-width: 1024px) { display: none; }
+`
+
+const MobileDonateBtn = styled.button`
+  flex: 1;
+  background: ${tokens.accent};
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  padding: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 150ms;
+  &:hover { background: ${tokens.accentDark}; }
+`
+
+const MobileShareBtn = styled.button`
+  width: 52px;
+  height: 52px;
+  background: ${tokens.cream};
+  border: 1.5px solid ${tokens.border};
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${tokens.charcoal};
+  cursor: pointer;
+  transition: background 150ms;
+  &:hover { background: ${tokens.clay}; }
+  flex-shrink: 0;
+`
+
+// ─── Mobile Bottom Padding ────────────────────────────────────────────────────
+
+const BottomPad = styled.div`
+  height: 80px;
+  @media (min-width: 1024px) { display: none; }
+`
+
+// ─── Copy Icon Toggle ─────────────────────────────────────────────────────────
+
+function CopyIcon({ copied }) {
+  return copied
+    ? <Check size={15} color="#166534" />
+    : <Copy size={15} />
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CampaignDetailPage() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useAuthStore()
-  const campaignId = params.id as string
+  const campaignId = params.id
 
   const [copied, setCopied] = useState(false)
-  const [lastUpdated, setLastUpdated] = useState<string>('')
+  const [lastUpdated, setLastUpdated] = useState('')
   const [isOfferHelpOpen, setIsOfferHelpOpen] = useState(false)
   const [isShareWizardOpen, setIsShareWizardOpen] = useState(false)
   const [isPrayerModalOpen, setIsPrayerModalOpen] = useState(false)
 
   const { data: campaign, isLoading, error } = useCampaign(campaignId)
-  const { data: analytics, refetch: refetchAnalytics } = useCampaignAnalytics(campaignId)
-  const { data: relatedCampaigns } = useRelatedCampaigns(
-    campaignId,
-    campaign?.need_type || '',
-    3
-  )
+  const { data: analytics } = useCampaignAnalytics(campaignId)
+  const { data: relatedCampaigns } = useRelatedCampaigns(campaignId, campaign?.need_type || '', 3)
   const { mutate: recordShare } = useRecordShare()
 
-  // Check if current user is the campaign creator
   const isCreator = user && campaign && user.id === campaign.creator_id ? true : undefined
+  const isFundraising = campaign?.campaign_type === 'fundraising'
+  const isSharing = campaign?.campaign_type === 'sharing'
 
-  // Handle boost payment success/cancellation
   useEffect(() => {
-    const boostStatus = searchParams?.get('boost_status')
-    if (boostStatus === 'success') {
-      toast.success('🎉 Boost payment successful! Your campaign is now boosted!', {
-        position: 'top-center',
-        autoClose: 5000,
-      })
-      // Remove query param from URL
+    const status = searchParams?.get('boost_status')
+    if (status === 'success') {
+      toast.success('🎉 Boost payment successful! Your campaign is now boosted!')
       window.history.replaceState({}, document.title, `/campaigns/${campaignId}`)
-    } else if (boostStatus === 'cancelled') {
-      toast.info('Boost payment was cancelled. Your campaign is still active.', {
-        position: 'top-center',
-        autoClose: 3000,
-      })
-      // Remove query param from URL
+    } else if (status === 'cancelled') {
+      toast.info('Boost payment was cancelled.')
       window.history.replaceState({}, document.title, `/campaigns/${campaignId}`)
     }
   }, [searchParams, campaignId])
 
-  // Update "last updated" time periodically
   useEffect(() => {
-    if (analytics?.lastUpdated) {
-      const updateTime = () => {
-        const lastUpdate = new Date(analytics.lastUpdated)
-        const now = new Date()
-        const diffMs = now.getTime() - lastUpdate.getTime()
-        const diffMins = Math.floor(diffMs / 60000)
-
-        if (diffMins === 0) {
-          setLastUpdated('just now')
-        } else if (diffMins < 60) {
-          setLastUpdated(`${diffMins}m ago`)
-        } else if (diffMins < 1440) {
-          const hours = Math.floor(diffMins / 60)
-          setLastUpdated(`${hours}h ago`)
-        } else {
-          const days = Math.floor(diffMins / 1440)
-          setLastUpdated(`${days}d ago`)
-        }
-      }
-
-      updateTime()
-      const interval = setInterval(updateTime, 60000) // Update every minute
-      return () => clearInterval(interval)
+    if (!analytics?.lastUpdated) return
+    const calc = () => {
+      const diff = Math.floor((Date.now() - new Date(analytics.lastUpdated).getTime()) / 60000)
+      if (diff === 0) return setLastUpdated('just now')
+      if (diff < 60) return setLastUpdated(`${diff}m ago`)
+      if (diff < 1440) return setLastUpdated(`${Math.floor(diff / 60)}h ago`)
+      setLastUpdated(`${Math.floor(diff / 1440)}d ago`)
     }
+    calc()
+    const id = setInterval(calc, 60000)
+    return () => clearInterval(id)
   }, [analytics?.lastUpdated])
 
-  // Log campaign image details when campaign loads
-  useEffect(() => {
-    if (campaign) {
-      console.log('📸 [CampaignDetailPage] Campaign loaded with image info', {
-        campaignId: campaign.id,
-        hasImageUrl: !!campaign.image_url,
-        imageUrl: campaign.image_url,
-        hasImageObject: !!campaign.image,
-        imageObjectUrl: campaign.image?.url,
-        normalizedUrl: normalizeImageUrl(campaign.image_url || campaign.image?.url),
-      });
-      
-      // DEBUG: Log share_config details
-      console.log('🔍 [CampaignDetailPage] Share Config Details:', {
-        campaignId: campaign.id,
-        campaignType: campaign.campaignType,
-        hasShareConfig: !!campaign.share_config,
-        share_config: campaign.share_config,
-        share_channels: campaign.share_config?.share_channels,
-        platforms: campaign.share_config?.platforms,
-        share_config_keys: campaign.share_config ? Object.keys(campaign.share_config) : [],
-        fullCampaignKeys: Object.keys(campaign),
-      });
-    }
-  }, [campaign]);
-
-  if (error) {
-    return (
-      <PageContainer>
-        <MainContent>
-          <div style={{ textAlign: 'center', paddingTop: '4rem' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827', marginBottom: '0.5rem' }}>
-              Campaign Not Found
-            </h1>
-            <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
-              The campaign you're looking for doesn't exist.
-            </p>
-            <Button as="link" href="/campaigns" variant="primary">
-              Back to Campaigns
-            </Button>
-          </div>
-        </MainContent>
-      </PageContainer>
-    )
-  }
-
-  if (isLoading || !campaign) {
-    return (
-      <PageContainer>
-        <HeroSection style={{ opacity: 0.5 }} />
-      </PageContainer>
-    )
-  }
-
-  const handleShare = (channel: string) => {
-    if (
-      channel === 'facebook' ||
-      channel === 'twitter' ||
-      channel === 'linkedin' ||
-      channel === 'email' ||
-      channel === 'whatsapp' ||
-      channel === 'link'
-    ) {
+  const handleShare = (channel) => {
+    if (['facebook','twitter','linkedin','email','whatsapp','link'].includes(channel)) {
       recordShare({ campaignId, channel })
     }
-    
-    // Build URL with UTM parameters for tracking
-    const baseUrl = `${window.location.origin}/campaigns/${campaignId}`
-    const utmParams = new URLSearchParams({
-      utm_source: channel || 'direct',
+    const base = `${window.location.origin}/campaigns/${campaignId}`
+    const utm = new URLSearchParams({
+      utm_source: channel,
       utm_medium: 'share',
       utm_campaign: campaignId,
-      utm_content: campaign.title || 'campaign',
     })
-    const shareUrl = `${baseUrl}?${utmParams.toString()}`
-    const plainShareUrl = baseUrl // No UTM params for share dialogs (they add their own)
+    const trackUrl = `${base}?${utm}`
 
     if (channel === 'copy') {
-      navigator.clipboard.writeText(shareUrl)
+      navigator.clipboard.writeText(trackUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-      toast.success('Link copied to clipboard with tracking!')
+      toast.success('Link copied!')
     } else if (channel === 'twitter') {
-      window.open(
-        `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-          `Check out this campaign: ${campaign.title}`
-        )}&url=${encodeURIComponent(plainShareUrl)}`,
-        '_blank'
-      )
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out: ${campaign.title}`)}&url=${encodeURIComponent(base)}`, '_blank')
     } else if (channel === 'facebook') {
-      window.open(
-        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(plainShareUrl)}`,
-        '_blank'
-      )
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(base)}`, '_blank')
     } else if (channel === 'email') {
-      window.open(
-        `mailto:?subject=${encodeURIComponent(campaign.title)}&body=${encodeURIComponent(
-          shareUrl
-        )}`
-      )
+      window.open(`mailto:?subject=${encodeURIComponent(campaign.title)}&body=${encodeURIComponent(trackUrl)}`)
     }
   }
 
   const handleDonate = () => {
     if (!user) {
-      // User not logged in - redirect to login with redirect back
       toast.info('Please log in to donate')
       router.push(`/login?redirect=/campaigns/${campaignId}/donate`)
     } else {
-      // User logged in - proceed to donation flow
       router.push(`/campaigns/${campaignId}/donate`)
     }
   }
 
-  const goalAmount = campaign.goal_amount || 0
-  const goalInDollars = goalAmount > 0 ? (goalAmount / 100).toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }) : '$0.00'
+  const goalAmount = campaign?.goal_amount || 0
+  const raisedAmount = campaign?.raised_amount || 0
+  const pct = goalAmount > 0 ? Math.min((raisedAmount / goalAmount) * 100, 100) : 0
+
+  const fmt = (cents) => (cents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+
+  const daysLeft = campaign?.end_date
+    ? Math.max(0, Math.ceil((new Date(campaign.end_date) - new Date()) / 86400000))
+    : null
+
+  // ── Loading ──────────────────────────────────────────────────────────────────
+
+  if (isLoading || !campaign) {
+    return (
+      <Page>
+        <SkeletonHero />
+        <Main style={{ gridTemplateColumns: '1fr' }}>
+          {[...Array(3)].map((_, i) => (
+            <SkeletonBase key={i} style={{ height: 180, borderRadius: 16, animationDelay: `${i * 0.1}s` }} />
+          ))}
+        </Main>
+      </Page>
+    )
+  }
+
+  // ── Error ────────────────────────────────────────────────────────────────────
+
+  if (error) {
+    return (
+      <Page>
+        <Main style={{ gridTemplateColumns: '1fr', textAlign: 'center', paddingTop: '5rem' }}>
+          <div>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
+            <h1 style={{ fontFamily: 'Syne', fontSize: '1.5rem', marginBottom: '0.5rem' }}>Campaign not found</h1>
+            <p style={{ color: tokens.muted, marginBottom: '1.5rem' }}>The campaign you're looking for doesn't exist or has been removed.</p>
+            <Link href="/campaigns" style={{ background: tokens.accent, color: 'white', padding: '0.75rem 1.5rem', borderRadius: '12px', textDecoration: 'none', fontFamily: 'Syne', fontWeight: 700 }}>
+              Browse Campaigns
+            </Link>
+          </div>
+        </Main>
+      </Page>
+    )
+  }
+
+  // ── Render ───────────────────────────────────────────────────────────────────
+
+  const imgUrl = normalizeImageUrl(campaign.image_url || campaign.image?.url)
 
   return (
-    <PageContainer>
-      {/* Track referral clicks when campaign loads with ?ref= parameter */}
+    <Page>
+      <GlobalStyle />
       <ReferralClickTracker campaignId={campaignId} />
 
-      {/* Hero Section */}
-      <HeroSection>
-        {campaign.image_url || campaign.image?.url ? (
-          <Image
-            src={normalizeImageUrl(campaign.image_url || campaign.image?.url) || '/placeholder-campaign.png'}
-            alt={campaign.image?.alt || campaign.title}
-            fill
-            style={{ objectFit: 'cover' }}
-            priority
-            onLoadingComplete={() => {
-              console.log('✅ [CampaignDetailPage] Hero image loaded successfully', {
-                src: normalizeImageUrl(campaign.image_url || campaign.image?.url),
-              });
-            }}
-            onError={(error) => {
-              console.error('❌ [CampaignDetailPage] Hero image failed to load', {
-                src: normalizeImageUrl(campaign.image_url || campaign.image?.url),
-                error: error,
-              });
-            }}
-          />
-        ) : (
-          <div style={{
-            width: '100%',
-            height: '100%',
-            background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)'
-          }} />
-        )}
-
-        <HeroOverlay />
-
-        <HeroContent>
-          <HeroGradient>
-            <h1>{campaign.title}</h1>
-            <p>
-              by{' '}
-              <Link href={`/creator/${campaign.creator_id}`}>
-                {campaign.creator_name || 'Creator'}
-              </Link>
-            </p>
-          </HeroGradient>
-        </HeroContent>
-      </HeroSection>
-
-      {/* Main Content */}
-      <MainContent>
-        <GridLayout>
-          {/* Main Column */}
-          <MainColumn>
-            {/* Progress Section - Only the progress bar for fundraising campaigns */}
-            <Card>
-              {campaign?.campaign_type === 'fundraising' && (
-                <>
-                  <h2>Campaign Progress</h2>
-
-                  {/* Multi-Meter Display or Fallback to Single Meter */}
-                  {(() => {
-                    const meters = []
-
-                    if (campaign && campaign.goal_amount > 0) {
-                      meters.push(
-                        createMeterData(
-                          'money',
-                          campaign.raised_amount || 0,
-                          campaign.goal_amount
-                        )
-                      )
-                    }
-
-                    if (analytics) {
-                      const helpingHandsGoal =
-                        (campaign as any)?.helpingHandsGoal || 50
-                      const helpingHandsCurrent = (analytics as any)?.helpingHandsCount || 0
-
-                      if (helpingHandsCurrent > 0 || (campaign as any)?.selectedMeters?.includes('helping_hands')) {
-                        meters.push(
-                          createMeterData(
-                            'helping_hands',
-                            helpingHandsCurrent,
-                            helpingHandsGoal
-                          )
-                        )
-                      }
-
-                      const customersGoal = (campaign as any)?.customersGoal || 100
-                      const customersCurrent = (analytics as any)?.customersCount || 0
-
-                      if (customersCurrent > 0 || (campaign as any)?.selectedMeters?.includes('customers')) {
-                        meters.push(
-                          createMeterData('customers', customersCurrent, customersGoal)
-                        )
-                      }
-                    }
-
-                    if (meters.length > 1) {
-                      return <MultiMeterDisplay meters={meters} />
-                    } else if (meters.length === 1 && campaign.goal_amount > 0) {
-                      return (
-                        <ProgressBar
-                          current={campaign.raised_amount || 0}
-                          goal={campaign.goal_amount}
-                          size="lg"
-                          showPercentage={true}
-                          showValues={true}
-                        />
-                      )
-                    }
-                    return null
-                  })()}
-                </>
-              )}
-
-              {/* Metrics Grid - Show for both fundraising and sharing campaigns */}
-              <MetricsGrid>
-                {campaign.campaign_type === 'fundraising' && (
-                  <MetricCard>
-                    <p>Avg Donation</p>
-                    <p>${((campaign.average_donation || 0) / 100).toFixed(0)}</p>
-                  </MetricCard>
-                )}
-                {campaign.campaign_type === 'sharing' && (
-                  <MetricCard>
-                    <p>Shares</p>
-                    <p>{(campaign.share_count || 0).toLocaleString()}</p>
-                  </MetricCard>
-                )}
-                <MetricCard>
-                  <p>Total Supporters</p>
-                  <p>{(campaign.total_donors || 0).toLocaleString()}</p>
-                </MetricCard>
-              </MetricsGrid>
-
-              {/* Days Left Metric */}
-              <MetricsGrid style={{ marginTop: '1rem', gridTemplateColumns: 'repeat(1, 1fr)' }}>
-                <MetricCard>
-                  <p>Days Left</p>
-                  <p>
-                    {campaign.status === 'completed'
-                      ? 'Ended'
-                      : campaign.end_date
-                      ? Math.max(0, Math.ceil(
-                          (new Date(campaign.end_date).getTime() -
-                            new Date().getTime()) /
-                            (1000 * 60 * 60 * 24)
-                        ))
-                      : 'N/A'}
-                  </p>
-                </MetricCard>
-              </MetricsGrid>
-            </Card>
-
-            {/* Share to Earn Info Section - Only for sharing campaigns */}
-            {campaign?.campaign_type === 'sharing' && (
-              <ShareInfoSection share_config={campaign?.share_config} />
-            )}
-
-            {/* Description Section */}
-            <Card>
-              <h2>About This Campaign</h2>
-              <DescriptionContent>
-                <p>{campaign.description || campaign.full_description || 'No description available'}</p>
-              </DescriptionContent>
-            </Card>
-
-            {/* Progress Updates Section */}
-            <Card>
-              <CampaignUpdates campaignId={campaignId} isCreator={isCreator} />
-            </Card>
-
-            {/* Prayer Support Section - For all campaigns */}
-            {campaign && (
+      {/* ── Hero ── */}
+      <HeroWrap>
+        <HeroImg>
+          {imgUrl ? (
+            <Image src={imgUrl} alt={campaign.title} fill priority />
+          ) : (
+            <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg, #2C2B28 0%, #4A4845 100%)` }} />
+          )}
+        </HeroImg>
+        <HeroScrim />
+        <HeroBody>
+          <HeroBadge>
+            <Sparkles size={11} />
+            {campaign.need_type || campaign.category || 'Campaign'}
+          </HeroBadge>
+          <HeroTitle>{campaign.title}</HeroTitle>
+          <HeroMeta>
+            <span>by</span>
+            <HeroCreator href={`/creator/${campaign.creator_id}`}>
+              {campaign.creator_name || 'Creator'}
+              <ArrowUpRight size={14} />
+            </HeroCreator>
+            {daysLeft !== null && (
               <>
-                <Card>
-                  <PrayerMeter campaignId={campaignId} goalPrayers={100} showBreakdown={false} />
-                </Card>
-
-                <Card>
-                  <PrayerActivityFeed campaignId={campaignId} page={1} limit={10} />
-                </Card>
+                <HeroSeparator />
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Clock size={13} />
+                  {daysLeft > 0 ? `${daysLeft} days left` : 'Ended'}
+                </span>
               </>
             )}
+          </HeroMeta>
+        </HeroBody>
+      </HeroWrap>
 
-            {/* QR Code Section */}
-            <QRCodeDisplay
-              campaignId={campaignId}
-              campaignTitle={campaign.title}
-              size={256}
-            />
+      {/* ── Quick Stats Bar ── */}
+      <QuickStatsBar>
+        <QuickStatsInner>
+          {isFundraising && (
+            <QuickStat>
+              <QuickStatLabel>Raised</QuickStatLabel>
+              <QuickStatValue>{fmt(raisedAmount)}</QuickStatValue>
+              <QuickStatSub>of {fmt(goalAmount)}</QuickStatSub>
+            </QuickStat>
+          )}
+          <QuickStat>
+            <QuickStatLabel>Supporters</QuickStatLabel>
+            <QuickStatValue>{(campaign.total_donors || 0).toLocaleString()}</QuickStatValue>
+            <QuickStatSub>total</QuickStatSub>
+          </QuickStat>
+          {isSharing && (
+            <QuickStat>
+              <QuickStatLabel>Shares</QuickStatLabel>
+              <QuickStatValue>{(campaign.share_count || 0).toLocaleString()}</QuickStatValue>
+              <QuickStatSub>total</QuickStatSub>
+            </QuickStat>
+          )}
+          {isFundraising && (
+            <QuickStat>
+              <QuickStatLabel>Avg Donation</QuickStatLabel>
+              <QuickStatValue>{fmt(campaign.average_donation || 0)}</QuickStatValue>
+              <QuickStatSub>per donor</QuickStatSub>
+            </QuickStat>
+          )}
+          <QuickStat>
+            <QuickStatLabel>Status</QuickStatLabel>
+            <QuickStatValue style={{ textTransform: 'capitalize', fontSize: '1rem' }}>
+              {campaign.status || 'Active'}
+            </QuickStatValue>
+            <QuickStatSub>{campaign.campaign_type}</QuickStatSub>
+          </QuickStat>
+        </QuickStatsInner>
+      </QuickStatsBar>
 
-            {/* Flyer Download Section */}
+      {/* ── Main Grid ── */}
+      <Main>
+        {/* ── Left Column ── */}
+        <LeftCol>
+
+          {/* Progress Card */}
+          {isFundraising && (
+            <Card $delay="50ms">
+              <CardTitle>
+                <CardTitleIcon $bg={tokens.accentLight} $color={tokens.accent}>
+                  <TrendingUp size={14} />
+                </CardTitleIcon>
+                Campaign Progress
+              </CardTitle>
+
+              <ProgressSection>
+                <ProgressNumbers>
+                  <RaisedAmount>{fmt(raisedAmount)}</RaisedAmount>
+                  <GoalAmount>goal: {fmt(goalAmount)}</GoalAmount>
+                </ProgressNumbers>
+                <ProgressTrack>
+                  <ProgressFill $pct={pct} />
+                </ProgressTrack>
+                <ProgressPct>{pct.toFixed(1)}% funded</ProgressPct>
+              </ProgressSection>
+
+              <MetricsStrip>
+                <Metric>
+                  <MetricVal>{(campaign.total_donors || 0).toLocaleString()}</MetricVal>
+                  <MetricLabel>Donors</MetricLabel>
+                </Metric>
+                <Metric>
+                  <MetricVal>{fmt(campaign.average_donation || 0)}</MetricVal>
+                  <MetricLabel>Avg Gift</MetricLabel>
+                </Metric>
+                <Metric>
+                  <MetricVal>{daysLeft !== null ? (daysLeft > 0 ? daysLeft : '–') : '–'}</MetricVal>
+                  <MetricLabel>Days Left</MetricLabel>
+                </Metric>
+              </MetricsStrip>
+            </Card>
+          )}
+
+          {/* Share Info */}
+          {isSharing && <ShareInfoSection share_config={campaign?.share_config} />}
+
+          {/* About */}
+          <Card $delay="100ms">
+            <CardTitle>
+              <CardTitleIcon $bg={tokens.blueLight} $color={tokens.blue}>
+                <BookOpen size={14} />
+              </CardTitleIcon>
+              About This Campaign
+            </CardTitle>
+            <Description>
+              {campaign.description || campaign.full_description || 'No description available.'}
+            </Description>
+            {campaign.tags?.length > 0 && (
+              <TagsRow>
+                {campaign.tags.map(t => (
+                  <TagChip key={t}>
+                    <Tag size={11} />
+                    {t}
+                  </TagChip>
+                ))}
+              </TagsRow>
+            )}
+          </Card>
+
+          {/* Updates */}
+          <Card $delay="150ms">
+            <CampaignUpdates campaignId={campaignId} isCreator={isCreator} />
+          </Card>
+
+          {/* Prayer */}
+          {campaign && (
+            <>
+              <Card $delay="175ms">
+                <PrayerMeter campaignId={campaignId} goalPrayers={100} showBreakdown={false} />
+              </Card>
+              <Card $delay="200ms">
+                <PrayerActivityFeed campaignId={campaignId} page={1} limit={10} />
+              </Card>
+            </>
+          )}
+
+          {/* QR + Flyer */}
+          <Card $delay="225ms">
+            <QRCodeDisplay campaignId={campaignId} campaignTitle={campaign.title} size={220} />
+          </Card>
+
+          <Card $delay="250ms">
             <FlyerDownload
               campaignId={campaignId}
               campaignTitle={campaign.title}
@@ -1340,284 +1125,236 @@ export default function CampaignDetailPage() {
               creatorName={campaign.creator_name || 'Creator'}
               category={campaign.need_type || campaign.category || 'Campaign'}
             />
+          </Card>
 
-            {/* Payment Directory - Only for fundraising campaigns */}
-            {campaign.campaign_type === 'fundraising' && campaign.payment_methods && campaign.payment_methods.length > 0 && (
+          {/* Payment Directory */}
+          {isFundraising && campaign.payment_methods?.length > 0 && (
+            <Card $delay="275ms">
               <PaymentDirectory
                 paymentMethods={campaign.payment_methods}
                 creatorName={campaign.creator_name || 'Creator'}
               />
-            )}
+            </Card>
+          )}
 
-            {/* Related Campaigns */}
-            {relatedCampaigns && relatedCampaigns.length > 0 && (
-              <RelatedCampaignsContainer>
-                <h2>Similar Campaigns</h2>
-                <RelatedCampaignsGrid>
-                  {relatedCampaigns.map((relatedCampaign) => (
-                    <CampaignCard
-                      key={relatedCampaign.id}
-                      campaign={relatedCampaign}
-                      onDonate={handleDonate}
-                      onShare={(id) => handleShare('twitter')}
-                    />
-                  ))}
-                </RelatedCampaignsGrid>
-              </RelatedCampaignsContainer>
-            )}
-          </MainColumn>
+          {/* Related Campaigns */}
+          {relatedCampaigns?.length > 0 && (
+            <Card $delay="300ms">
+              <CardTitle>
+                <CardTitleIcon $bg={tokens.successLight} $color={tokens.success}>
+                  <Sparkles size={14} />
+                </CardTitleIcon>
+                Similar Campaigns
+              </CardTitle>
+              <RelatedGrid>
+                {relatedCampaigns.map(c => (
+                  <CampaignCard key={c.id} campaign={c} onDonate={handleDonate} onShare={() => handleShare('twitter')} />
+                ))}
+              </RelatedGrid>
+            </Card>
+          )}
+        </LeftCol>
 
-          {/* Sidebar */}
-          <Sidebar>
-            {/* CTA Buttons */}
-            <CTAButtonsContainer>
-              {/* Check if this is a sharing campaign */}
-              {campaign?.campaign_type === 'sharing' ? (
-                // Share to Earn Flow
-                <>
-                  <Button
-                    onClick={() => setIsShareWizardOpen(true)}
-                    variant="primary"
-                    size="lg"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-                  >
-                    💰 Share to Earn
-                  </Button>
+        {/* ── Sidebar ── */}
+        <RightCol>
+          <CTACard $delay="75ms">
 
-                  <Button
-                    onClick={() => handleShare('copy')}
-                    variant="outline"
-                    size="lg"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-                  >
-                    {copied ? <Check size={20} /> : <Copy size={20} />}
-                    {copied ? 'Copied!' : 'Copy Link'}
-                  </Button>
+            {/* ── Sharing Campaign Sidebar ── */}
+            {isSharing ? (
+              <>
+                <PrimaryBtn onClick={() => setIsShareWizardOpen(true)}>
+                  <Gift size={18} />
+                  Share to Earn
+                </PrimaryBtn>
 
-                  <Button
-                    onClick={() => setIsOfferHelpOpen(true)}
-                    variant="secondary"
-                    size="lg"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-                  >
-                    <Briefcase size={20} />
-                    Offer Help
-                  </Button>
-
-                  {/* Share Buttons */}
-                  <ShareButtonsGrid>
-                    <ShareButton
-                      onClick={() => handleShare('twitter')}
-                      title="Share on Twitter"
-                    >
-                      <span>𝕏</span>
-                    </ShareButton>
-                    <ShareButton
-                      onClick={() => handleShare('facebook')}
-                      title="Share on Facebook"
-                    >
-                      <span>fb</span>
-                    </ShareButton>
-                    <ShareButton
-                      onClick={() => handleShare('email')}
-                      title="Share via Email"
-                    >
-                      <span>✉️</span>
-                    </ShareButton>
-                  </ShareButtonsGrid>
-
-                  {/* Campaign Budget Info for Sharing */}
-                  {campaign?.share_config && (
-                    <div style={{
-                      background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
-                      border: '1px solid #93c5fd',
-                      borderRadius: '0.5rem',
-                      padding: '1rem',
-                      fontSize: '0.875rem',
-                      color: '#0c4a6e',
-                      textAlign: 'center'
-                    }}>
-                      <div style={{ fontWeight: '700', marginBottom: '0.5rem' }}>
-                        💵 ${(campaign.share_config.amount_per_share || 50) / 100} per share
-                      </div>
-                      <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
-                        Budget: ${(campaign.share_config.total_budget || 0) / 100}
-                      </div>
+                {campaign?.share_config && (
+                  <BudgetPill style={{ marginTop: '0.875rem' }}>
+                    <div>
+                      <BudgetMain>${(campaign.share_config.amount_per_share || 50) / 100} per share</BudgetMain>
+                      <BudgetSub>Budget: {fmt(campaign.share_config.total_budget || 0)}</BudgetSub>
                     </div>
-                  )}
-                </>
-              ) : (
-                // Traditional Donate Flow
-                <>
-                  <Button
-                    onClick={handleDonate}
-                    variant="primary"
-                    size="lg"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-                  >
-                    {user ? (
-                      <>
-                        <Hand size={20} />
-                        💰 Donate Now
-                      </>
-                    ) : (
-                      <>
-                        🔐 Log in to Donate
-                      </>
-                    )}
-                  </Button>
+                    <Zap size={20} color={tokens.accent} />
+                  </BudgetPill>
+                )}
 
-                  <Button
-                    onClick={() => setIsOfferHelpOpen(true)}
-                    variant="secondary"
-                    size="lg"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-                  >
-                    <Briefcase size={20} />
-                    Offer Help
-                  </Button>
+                <SectionLabel style={{ marginTop: '1rem' }}><span>More Actions</span></SectionLabel>
 
-                  <Button
-                    onClick={() => setIsPrayerModalOpen(true)}
-                    variant="secondary"
-                    size="lg"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-                  >
-                    🙏 Pray for Campaign
-                  </Button>
-
-                  <Button
-                    onClick={() => handleShare('copy')}
-                    variant="outline"
-                    size="lg"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-                  >
-                    {copied ? <Check size={20} /> : <Copy size={20} />}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                  <SecondaryBtn onClick={() => handleShare('copy')}>
+                    <CopyIcon copied={copied} />
                     {copied ? 'Copied!' : 'Copy Link'}
-                  </Button>
-
-                  {/* Share Buttons */}
-                  <ShareButtonsGrid>
-                    <ShareButton
-                      onClick={() => handleShare('twitter')}
-                      title="Share on Twitter"
-                    >
-                      <span>𝕏</span>
-                    </ShareButton>
-                    <ShareButton
-                      onClick={() => handleShare('facebook')}
-                      title="Share on Facebook"
-                    >
-                      <span>fb</span>
-                    </ShareButton>
-                    <ShareButton
-                      onClick={() => handleShare('email')}
-                      title="Share via Email"
-                    >
-                      <span>✉️</span>
-                    </ShareButton>
-                  </ShareButtonsGrid>
-                </>
-              )}
-
-              {/* Report Button */}
-              <ReportButton>
-                <Flag size={16} />
-                Report Campaign
-              </ReportButton>
-            </CTAButtonsContainer>
-
-            {/* Campaign Info */}
-            <CampaignDetailsCard>
-              <h3>Campaign Details</h3>
-
-              <div>
-                <Calendar size={18} />
-                <div>
-                  <p>Ends on</p>
-                  <p>
-                    {campaign.end_date
-                      ? new Date(campaign.end_date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })
-                      : 'N/A'}
-                  </p>
+                  </SecondaryBtn>
+                  <SecondaryBtn onClick={() => setIsOfferHelpOpen(true)}>
+                    <Briefcase size={16} />
+                    Offer Help
+                  </SecondaryBtn>
                 </div>
-              </div>
 
-              <div>
-                <Users size={18} />
-                <div>
-                  <p>Category</p>
-                  <p>{campaign.need_type || campaign.category || 'N/A'}</p>
+                <SectionLabel style={{ marginTop: '1rem' }}><span>Share On</span></SectionLabel>
+
+                <ShareGrid>
+                  <ShareBtn onClick={() => handleShare('twitter')}>
+                    X
+                  </ShareBtn>
+                  <ShareBtn onClick={() => handleShare('facebook')}>
+                    FB
+                  </ShareBtn>
+                  <ShareBtn onClick={() => handleShare('email')}>
+                    <Mail size={14} /> Email
+                  </ShareBtn>
+                </ShareGrid>
+              </>
+            ) : (
+              /* ── Fundraising Campaign Sidebar ── */
+              <>
+                <PrimaryBtn onClick={handleDonate}>
+                  <Hand size={18} />
+                  {user ? 'Donate Now' : 'Log in to Donate'}
+                </PrimaryBtn>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', marginTop: '0.75rem' }}>
+                  <SecondaryBtn onClick={() => setIsOfferHelpOpen(true)}>
+                    <Briefcase size={16} />
+                    Offer Help
+                  </SecondaryBtn>
+                  <SecondaryBtn onClick={() => setIsPrayerModalOpen(true)}>
+                    🙏 Pray for This Campaign
+                  </SecondaryBtn>
+                  <SecondaryBtn onClick={() => handleShare('copy')}>
+                    <CopyIcon copied={copied} />
+                    {copied ? 'Copied!' : 'Copy Link'}
+                  </SecondaryBtn>
                 </div>
-              </div>
 
-              <div>
-                <TrendingUp size={18} />
-                <div>
-                  <p>Goal Amount</p>
-                  <p>{goalInDollars && goalInDollars !== 'NaN' ? goalInDollars : 'N/A'}</p>
-                </div>
-              </div>
+                <SectionLabel style={{ marginTop: '1rem' }}><span>Share On</span></SectionLabel>
 
-              {/* Tags */}
-              {campaign.tags && campaign.tags.length > 0 && (
-                <TagsContainer>
-                  <p>Tags</p>
-                  <TagsWrapper>
-                    {campaign.tags.map((tag) => (
-                      <Tag key={tag}>{tag}</Tag>
-                    ))}
-                  </TagsWrapper>
-                </TagsContainer>
-              )}
-            </CampaignDetailsCard>
-
-            {/* Last Updated */}
-            {lastUpdated && (
-              <LastUpdatedCard>
-                <RefreshCw />
-                Updated {lastUpdated}
-              </LastUpdatedCard>
+                <ShareGrid>
+                  <ShareBtn onClick={() => handleShare('twitter')}>
+                    X
+                  </ShareBtn>
+                  <ShareBtn onClick={() => handleShare('facebook')}>
+                    FB
+                  </ShareBtn>
+                  <ShareBtn onClick={() => handleShare('email')}>
+                    <Mail size={14} /> Email
+                  </ShareBtn>
+                </ShareGrid>
+              </>
             )}
-          </Sidebar>
-        </GridLayout>
 
-        {/* Volunteer Offers Section (for creators viewing their campaign) */}
-        <VolunteerSection>
-          <VolunteerOffers campaignId={campaignId} expandedView={true} />
-        </VolunteerSection>
-      </MainContent>
+            <Divider style={{ marginTop: '1rem' }} />
 
-      {/* Offer Help Modal */}
+            {/* Campaign Details */}
+            <DetailsList style={{ marginTop: '0.5rem' }}>
+              <DetailsRow>
+                <DetailsIcon $bg={tokens.cream} $color={tokens.charcoal}>
+                  <Calendar size={15} />
+                </DetailsIcon>
+                <DetailsText>
+                  <DetailsLabel>End Date</DetailsLabel>
+                  <DetailsValue>
+                    {campaign.end_date
+                      ? new Date(campaign.end_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                      : 'No end date'}
+                  </DetailsValue>
+                </DetailsText>
+              </DetailsRow>
+
+              <DetailsRow>
+                <DetailsIcon $bg={tokens.cream} $color={tokens.charcoal}>
+                  <Users size={15} />
+                </DetailsIcon>
+                <DetailsText>
+                  <DetailsLabel>Category</DetailsLabel>
+                  <DetailsValue>{campaign.need_type || campaign.category || 'General'}</DetailsValue>
+                </DetailsText>
+              </DetailsRow>
+
+              {isFundraising && (
+                <DetailsRow>
+                  <DetailsIcon $bg={tokens.accentLight} $color={tokens.accent}>
+                    <TrendingUp size={15} />
+                  </DetailsIcon>
+                  <DetailsText>
+                    <DetailsLabel>Funding Goal</DetailsLabel>
+                    <DetailsValue>{goalAmount > 0 ? fmt(goalAmount) : 'N/A'}</DetailsValue>
+                  </DetailsText>
+                </DetailsRow>
+              )}
+            </DetailsList>
+
+            <Divider style={{ marginTop: '0.5rem' }} />
+
+            {lastUpdated && (
+              <UpdatedPill>
+                <RefreshCw size={13} />
+                Updated {lastUpdated}
+              </UpdatedPill>
+            )}
+
+            <ReportBtn>
+              <Flag size={13} />
+              Report this campaign
+            </ReportBtn>
+          </CTACard>
+        </RightCol>
+      </Main>
+
+      {/* Volunteer Section */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 clamp(1rem, 4vw, 2rem)' }}>
+        <VolunteerWrap>
+          <VolunteerOffers campaignId={campaignId} expandedView />
+        </VolunteerWrap>
+        <BottomPad />
+      </div>
+
+      {/* ── Mobile Sticky CTA ── */}
+      <MobileCtaBar>
+        {isSharing ? (
+          <>
+            <MobileDonateBtn onClick={() => setIsShareWizardOpen(true)}>
+              <Gift size={16} />
+              Share to Earn
+            </MobileDonateBtn>
+            <MobileShareBtn onClick={() => handleShare('copy')} aria-label="Copy link">
+              {copied ? <Check size={18} color="#166534" /> : <Link2 size={18} />}
+            </MobileShareBtn>
+          </>
+        ) : (
+          <>
+            <MobileDonateBtn onClick={handleDonate}>
+              <Hand size={16} />
+              {user ? 'Donate Now' : 'Log in to Donate'}
+            </MobileDonateBtn>
+            <MobileShareBtn onClick={() => handleShare('copy')} aria-label="Copy link">
+              {copied ? <Check size={18} color="#166534" /> : <Share2 size={18} />}
+            </MobileShareBtn>
+          </>
+        )}
+      </MobileCtaBar>
+
+      {/* Modals */}
       <OfferHelpModal
         isOpen={isOfferHelpOpen}
         onClose={() => setIsOfferHelpOpen(false)}
         campaignId={campaignId}
         campaignTitle={campaign?.title || 'Campaign'}
       />
-
-      {/* Share Wizard Modal */}
       <ShareWizard
         isOpen={isShareWizardOpen}
         onClose={() => setIsShareWizardOpen(false)}
         campaignId={campaignId}
-        campaignTitle={campaign?.title || 'Campaign'}
+        campaignTitle={campaign?.title}
         campaignDescription={campaign?.description || campaign?.full_description}
         creator_name={campaign?.creator_name}
         share_config={campaign?.share_config}
       />
-
-      {/* Prayer Modal */}
       <PrayerModal
         isOpen={isPrayerModalOpen}
         onClose={() => setIsPrayerModalOpen(false)}
         campaignId={campaignId}
         campaignTitle={campaign?.title || 'Campaign'}
       />
-    </PageContainer>
+    </Page>
   )
 }

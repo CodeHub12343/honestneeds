@@ -2,9 +2,22 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import styled from 'styled-components'
+import styled, { keyframes, css } from 'styled-components'
 import { useState } from 'react'
-import { TrendingUp, Share2, Users, Hand, MapPin, Map, Globe, Zap, Copy, Check } from 'lucide-react'
+import {
+  TrendingUp,
+  Share2,
+  Heart,
+  MapPin,
+  Map,
+  Globe,
+  Zap,
+  Copy,
+  Check,
+  Users,
+  Sparkles,
+  ArrowRight,
+} from 'lucide-react'
 import { Campaign } from '@/api/services/campaignService'
 import { normalizeImageUrl } from '@/utils/imageUtils'
 import Button from '@/components/ui/Button'
@@ -16,546 +29,486 @@ interface CampaignCardProps {
   onShare?: (campaignId: string) => void
 }
 
-// Styled Components
-const CardContainer = styled.div`
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+// ─── Animations ──────────────────────────────────────────────────────────────
+const shimmer = keyframes`
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+`
+
+const fadeUp = keyframes`
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+`
+
+// ─── Card Shell ───────────────────────────────────────────────────────────────
+const Card = styled.article`
+  background: #ffffff;
+  border-radius: 16px;
   overflow: hidden;
-  transition: box-shadow 0.2s ease;
+  border: 1px solid #f0f0f0;
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  animation: ${fadeUp} 350ms ease both;
+  display: flex;
+  flex-direction: column;
 
   &:hover {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.09);
+    border-color: #e4e4f0;
   }
 `
 
-const ImageContainer = styled.div`
+// ─── Image ─────────────────────────────────────────────────────────────────────
+const ImageWrap = styled.div`
   position: relative;
-  height: 12rem;
-  background-color: #e5e7eb;
+  height: 180px;
+  background: linear-gradient(135deg, #f0efff 0%, #ede8ff 100%);
   overflow: hidden;
+  flex-shrink: 0;
+
+  img {
+    transition: transform 400ms ease;
+  }
+
+  ${Card}:hover & img {
+    transform: scale(1.04);
+  }
 `
 
 const ImagePlaceholder = styled.div`
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom right, rgba(99, 102, 241, 0.1), rgba(118, 75, 162, 0.1));
   display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #e0f2fe 100%);
+
+  svg {
+    width: 40px;
+    height: 40px;
+    color: #c4b5fd;
+  }
 `
 
-const PlaceholderText = styled.span`
-  color: #9ca3af;
-  font-size: 0.875rem;
-`
-
-const BadgesContainer = styled.div`
+// ─── Badge cluster ──────────────────────────────────────────────────────────────
+const BadgeRow = styled.div`
   position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
+  top: 10px;
+  left: 10px;
+  right: 10px;
   display: flex;
-  gap: 0.5rem;
+  gap: 6px;
   flex-wrap: wrap;
 `
 
-const BaseBadge = styled.span`
+const Badge = styled.span<{
+  $variant?: 'scope' | 'trending' | 'done' | 'earn' | 'boost'
+  $scope?: string
+  $tier?: string
+}>`
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-`
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(8px);
+  line-height: 1.6;
 
-const ScopeBadge = styled(BaseBadge)<{ $scope: string }>`
-  background-color: ${(props) => {
-    switch (props.$scope) {
-      case 'local':
-        return '#dbeafe'
-      case 'regional':
-        return '#dcfce7'
-      case 'national':
-        return '#f3e8ff'
-      case 'global':
-        return '#fed7aa'
-      default:
-        return '#f3f4f6'
+  ${({ $variant, $scope, $tier }) => {
+    if ($variant === 'earn') return css`
+      background: rgba(255, 255, 255, 0.92);
+      color: #0369a1;
+      border: 1px solid rgba(14, 165, 233, 0.35);
+    `
+    if ($variant === 'trending') return css`
+      background: rgba(255, 255, 255, 0.92);
+      color: #b45309;
+      border: 1px solid rgba(251, 191, 36, 0.5);
+    `
+    if ($variant === 'done') return css`
+      background: rgba(255, 255, 255, 0.92);
+      color: #15803d;
+      border: 1px solid rgba(34, 197, 94, 0.4);
+    `
+    if ($variant === 'boost') {
+      const tierStyles: Record<string, string> = {
+        basic: 'background: rgba(219,234,254,0.95); color: #1e40af; border: 1px solid rgba(96,165,250,0.4);',
+        pro: 'background: rgba(233,213,255,0.95); color: #6b21a8; border: 1px solid rgba(192,132,252,0.4);',
+        premium: 'background: rgba(254,243,199,0.95); color: #b45309; border: 1px solid rgba(251,191,36,0.5);',
+      }
+      return css`${tierStyles[$tier || 'basic'] || tierStyles.basic}`
     }
-  }};
-  color: ${(props) => {
-    switch (props.$scope) {
-      case 'local':
-        return '#1d4ed8'
-      case 'regional':
-        return '#15803d'
-      case 'national':
-        return '#6b21a8'
-      case 'global':
-        return '#b45309'
-      default:
-        return '#374151'
+    if ($variant === 'scope') {
+      const scopeMap: Record<string, string> = {
+        local: 'background:rgba(219,234,254,0.92);color:#1e40af;border:1px solid rgba(96,165,250,0.4);',
+        regional: 'background:rgba(220,252,231,0.92);color:#14532d;border:1px solid rgba(74,222,128,0.4);',
+        national: 'background:rgba(243,232,255,0.92);color:#6b21a8;border:1px solid rgba(192,132,252,0.4);',
+        global: 'background:rgba(255,237,213,0.92);color:#9a3412;border:1px solid rgba(251,146,60,0.4);',
+      }
+      return css`${scopeMap[$scope || ''] || 'background:rgba(243,244,246,0.92);color:#374151;border:1px solid rgba(156,163,175,0.4);'}`
     }
-  }};
+    return ''
+  }}
 `
 
-const TrendingBadge = styled(BaseBadge)`
-  background-color: #fed7aa;
-  color: #b45309;
+// ─── Body ──────────────────────────────────────────────────────────────────────
+const Body = styled.div`
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
 `
 
-const CompletedBadge = styled(BaseBadge)`
-  background-color: #dcfce7;
-  color: #15803d;
+const TitleRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 `
 
-const ShareToEarnBadge = styled(BaseBadge)`
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  color: #0c4a6e;
-  font-weight: 600;
-  border: 1px solid #93c5fd;
-`
-
-const BoostBadge = styled(BaseBadge)<{ $tier: string }>`
-  background-color: ${(props) => {
-    switch (props.$tier) {
-      case 'basic':
-        return '#dbeafe'
-      case 'pro':
-        return '#e9d5ff'
-      case 'premium':
-        return '#fef3c7'
-      default:
-        return '#f3f4f6'
-    }
-  }};
-  color: ${(props) => {
-    switch (props.$tier) {
-      case 'basic':
-        return '#0c4a6e'
-      case 'pro':
-        return '#6b21a8'
-      case 'premium':
-        return '#b45309'
-      default:
-        return '#374151'
-    }
-  }};
-  font-weight: 600;
-  border: 1px solid ${(props) => {
-    switch (props.$tier) {
-      case 'basic':
-        return '#93c5fd'
-      case 'pro':
-        return '#d8b4fe'
-      case 'premium':
-        return '#fde047'
-      default:
-        return '#d1d5db'
-    }
-  }};
-  background: ${(props) => {
-    switch (props.$tier) {
-      case 'premium':
-        return 'linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%)'
-      case 'pro':
-        return 'linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%)'
-      case 'basic':
-        return 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)'
-      default:
-        return '#f3f4f6'
-    }
-  }};
-`
-
-const ContentSection = styled.div`
-  padding: 1rem;
-`
-
-const TitleCreatorSection = styled.div`
-  margin-bottom: 0.75rem;
-`
-
-const CampaignTitle = styled.h3`
-  font-size: 1.125rem;
-  font-weight: 600;
+const Title = styled.h3`
+  font-size: 0.95rem;
+  font-weight: 700;
   color: #111827;
-  transition: color 0.2s ease;
+  line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  margin: 0;
+  letter-spacing: -0.01em;
+  transition: color 200ms;
 
-  &:hover {
+  a:hover & {
     color: #6366f1;
   }
 `
 
-const CreatorLink = styled.p`
-  font-size: 0.875rem;
-  color: #4b5563;
-  transition: color 0.2s ease;
-  margin-top: 0.25rem;
+const CreatorName = styled.p`
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin: 0;
+  font-weight: 500;
 
-  &:hover {
+  span {
     color: #6366f1;
+    transition: color 180ms;
+  }
+
+  a:hover span {
+    color: #4f46e5;
   }
 `
 
+// ─── Progress ──────────────────────────────────────────────────────────────────
 const ProgressSection = styled.div`
-  margin-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 `
 
-const ProgressLabelRow = styled.div`
+const ProgressMeta = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.25rem;
+  align-items: baseline;
 `
 
-const ProgressLabel = styled.span`
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #4b5563;
-`
-
-const ProgressPercent = styled.span`
-  font-size: 0.75rem;
-  font-weight: 500;
+const RaisedAmount = styled.span`
+  font-size: 0.85rem;
+  font-weight: 700;
   color: #111827;
 `
 
-const ProgressBar = styled.div`
-  width: 100%;
-  background-color: #e5e7eb;
-  border-radius: 9999px;
-  height: 0.5rem;
+const GoalAmount = styled.span`
+  font-size: 0.72rem;
+  color: #9ca3af;
+  font-weight: 500;
+`
+
+const ProgressTrack = styled.div`
+  height: 5px;
+  background: #f3f4f6;
+  border-radius: 999px;
   overflow: hidden;
 `
 
-const ProgressBarFill = styled.div<{ $percentage: number }>`
-  background: linear-gradient(to right, #6366f1, #764ba2);
-  border-radius: 9999px;
+const ProgressFill = styled.div<{ $pct: number }>`
   height: 100%;
-  width: ${(props) => props.$percentage}%;
-  transition: width 0.3s ease;
+  width: ${p => Math.min(p.$pct, 100)}%;
+  background: ${p => p.$pct >= 100
+    ? 'linear-gradient(90deg, #10b981, #34d399)'
+    : 'linear-gradient(90deg, #6366f1, #818cf8)'};
+  border-radius: 999px;
+  transition: width 600ms cubic-bezier(0.4, 0, 0.2, 1);
 `
 
-const ProgressValuesRow = styled.div`
+const ProgressPct = styled.span<{ $pct: number }>`
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: ${p => p.$pct >= 100 ? '#10b981' : '#6366f1'};
+`
+
+// ─── Stats ─────────────────────────────────────────────────────────────────────
+const StatsRow = styled.div`
   display: flex;
-  justify-content: space-between;
+  gap: 12px;
+`
+
+const Stat = styled.div`
+  display: flex;
   align-items: center;
-  margin-top: 0.25rem;
-`
-
-const ProgressValue = styled.span`
+  gap: 5px;
   font-size: 0.75rem;
-  color: #4b5563;
-`
+  color: #6b7280;
+  font-weight: 500;
 
-const MetricsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  text-align: center;
+  svg {
+    color: #d1d5db;
+    flex-shrink: 0;
+  }
 
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(4, 1fr);
+  strong {
+    color: #374151;
+    font-weight: 700;
   }
 `
 
-const MetricCard = styled.div`
-  background-color: #f9fafb;
-  border-radius: 0.25rem;
-  padding: 0.5rem;
-`
-
-const MetricLabel = styled.div`
-  font-size: 0.75rem;
-  color: #4b5563;
-`
-
-const MetricValue = styled.div`
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #111827;
-`
-
-const ActionsContainer = styled.div`
+// ─── Actions ───────────────────────────────────────────────────────────────────
+const Actions = styled.div`
   display: flex;
-  gap: 0.5rem;
+  gap: 8px;
+  margin-top: auto;
 `
 
-const ActionButton = styled(Button)`
+const DonateBtn = styled.button`
   flex: 1;
+  height: 38px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 6px;
+  letter-spacing: 0.2px;
+  transition: opacity 180ms, transform 120ms;
+
+  &:hover { opacity: 0.9; transform: scale(1.01); }
+  &:active { transform: scale(0.98); }
 `
 
-const ViewDetailsLink = styled(Link)`
-  display: block;
-  text-align: center;
-  font-size: 0.75rem;
-  color: #6366f1;
-  text-decoration: none;
-  margin-top: 0.5rem;
-  transition: color 0.2s ease;
+const ShareBtn = styled.button`
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  background: #fafafa;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 180ms, background 180ms, color 180ms;
 
   &:hover {
-    color: #4f46e5;
-    text-decoration: underline;
+    border-color: #6366f1;
+    background: #eef2ff;
+    color: #6366f1;
   }
 `
 
-export function CampaignCard({
-  campaign,
-  onDonate,
-  onShare,
-}: CampaignCardProps) {
-  const [isShareWizardOpen, setIsShareWizardOpen] = useState(false)
+const ShareEarnBtn = styled(DonateBtn)`
+  background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+`
+
+const CopyBtn = styled(ShareBtn)<{ $copied?: boolean }>`
+  ${p => p.$copied && css`
+    border-color: #10b981;
+    background: #ecfdf5;
+    color: #10b981;
+  `}
+`
+
+const ViewLink = styled(Link)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-decoration: none;
+  transition: color 180ms;
+  letter-spacing: 0.1px;
+
+  &:hover { color: #6366f1; }
+  svg { transition: transform 180ms; }
+  &:hover svg { transform: translateX(2px); }
+`
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+const scopeIcon = (scope?: string) => {
+  const map: Record<string, JSX.Element> = {
+    local: <MapPin size={10} />,
+    regional: <Map size={10} />,
+    national: <Globe size={10} />,
+    global: <Zap size={10} />,
+  }
+  return scope ? map[scope] : null
+}
+
+const fmt = (cents: number) =>
+  (cents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+
+// ─── Component ─────────────────────────────────────────────────────────────────
+export function CampaignCard({ campaign, onDonate, onShare }: CampaignCardProps) {
+  const [wizardOpen, setWizardOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  const handleShareLink = () => {
-    const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/campaigns/${campaign.id}`
-    navigator.clipboard.writeText(shareUrl)
+  const goalAmount = campaign.goals?.[0]?.target_amount ?? 0
+  const raised = campaign.total_donation_amount ?? 0
+  const pct = goalAmount > 0 ? Math.min((raised / goalAmount) * 100, 100) : 0
+
+  const handleCopy = () => {
+    const url = `${window.location.origin}/campaigns/${campaign.id}`
+    navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // Compute goal amount from goals array or use fallback
-  const goalAmount = campaign.goals?.length > 0 
-    ? campaign.goals[0].target_amount 
-    : 0
-
-  // Use total_donation_amount from backend (in cents)
-  const raisedAmount = campaign.total_donation_amount || 0
-
-  const progressPercent = goalAmount > 0
-    ? Math.min((raisedAmount / goalAmount) * 100, 100)
-    : 0
-
-  const goalInDollars = (goalAmount / 100).toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  })
-
-  const raisedInDollars = (raisedAmount / 100).toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  })
-
-  const getScopeIcon = () => {
-    switch (campaign.geographicScope) {
-      case 'local':
-        return <MapPin size={14} />
-      case 'regional':
-        return <Map size={14} />
-      case 'national':
-        return <Globe size={14} />
-      case 'global':
-        return <Zap size={14} />
-      default:
-        return null
-    }
-  }
-
-  const getScopeLabel = () => {
-    if (!campaign.geographicScope) return ''
-    const label = campaign.geographicScope.charAt(0).toUpperCase() + campaign.geographicScope.slice(1)
-    return label
-  }
-
-  const getBoostTierLabel = () => {
-    const tier = campaign.current_boost_tier || 'basic'
-    return tier.charAt(0).toUpperCase() + tier.slice(1)
-  }
-
-  const getBoostTierEmoji = () => {
-    switch (campaign.current_boost_tier) {
-      case 'basic':
-        return '⚡'
-      case 'pro':
-        return '🚀'
-      case 'premium':
-        return '👑'
-      default:
-        return '⭐'
-    }
-  }
+  const isSharing = campaign.campaign_type === 'sharing'
+  const tierLabel = (campaign.current_boost_tier ?? 'basic')
+  const tierEmoji: Record<string, string> = { basic: '⚡', pro: '🚀', premium: '👑' }
 
   return (
-    <CardContainer>
-      {/* Image Container */}
-      <ImageContainer>
+    <Card>
+      {/* ── Image ── */}
+      <ImageWrap>
         {campaign.image_url || campaign.image?.url ? (
           <Image
             src={normalizeImageUrl(campaign.image_url || campaign.image?.url) || '/placeholder-campaign.png'}
             alt={campaign.image?.alt || campaign.title}
             fill
-            className="object-cover hover:scale-105 transition-transform duration-300"
+            style={{ objectFit: 'cover' }}
           />
         ) : (
           <ImagePlaceholder>
-            <PlaceholderText>No image</PlaceholderText>
+            <Sparkles />
           </ImagePlaceholder>
         )}
 
-        {/* Status Badge */}
-        <BadgesContainer>
+        <BadgeRow>
           {campaign.is_boosted && (
-            <BoostBadge $tier={campaign.current_boost_tier || 'basic'}>
-              {getBoostTierEmoji()}
-              {getBoostTierLabel()} Boosted
-            </BoostBadge>
+            <Badge $variant="boost" $tier={tierLabel}>
+              {tierEmoji[tierLabel]} {tierLabel.charAt(0).toUpperCase() + tierLabel.slice(1)}
+            </Badge>
           )}
-          {campaign.campaign_type === 'sharing' && (
-            <ShareToEarnBadge>
-              💰 Share to Earn
-            </ShareToEarnBadge>
-          )}
+          {isSharing && <Badge $variant="earn">💰 Share to Earn</Badge>}
           {campaign.geographicScope && (
-            <ScopeBadge $scope={campaign.geographicScope}>
-              {getScopeIcon()}
-              {getScopeLabel()}
-            </ScopeBadge>
+            <Badge $variant="scope" $scope={campaign.geographicScope}>
+              {scopeIcon(campaign.geographicScope)}
+              {campaign.geographicScope.charAt(0).toUpperCase() + campaign.geographicScope.slice(1)}
+            </Badge>
           )}
           {campaign.trending && (
-            <TrendingBadge>
-              <TrendingUp size={14} />
-              Trending
-            </TrendingBadge>
+            <Badge $variant="trending"><TrendingUp size={10} /> Trending</Badge>
           )}
           {campaign.status === 'completed' && (
-            <CompletedBadge>
-              <span>✓</span>
-              Completed
-            </CompletedBadge>
+            <Badge $variant="done">✓ Completed</Badge>
           )}
-        </BadgesContainer>
-      </ImageContainer>
+        </BadgeRow>
+      </ImageWrap>
 
-      {/* Content */}
-      <ContentSection>
-        {/* Title & Creator */}
-        <TitleCreatorSection>
-          <Link href={`/campaigns/${campaign.id}`}>
-            <CampaignTitle>
-              {campaign.title}
-            </CampaignTitle>
+      {/* ── Body ── */}
+      <Body>
+        {/* Title */}
+        <TitleRow>
+          <Link href={`/campaigns/${campaign.id}`} style={{ textDecoration: 'none' }}>
+            <Title>{campaign.title}</Title>
           </Link>
-          <Link href={`/creator/${campaign.creator_id}`}>
-            <CreatorLink>
-              by {campaign.creator_name}
-            </CreatorLink>
-          </Link>
-        </TitleCreatorSection>
+        </TitleRow>
 
-        {/* Progress Bar */}
+        {/* Progress */}
         <ProgressSection>
-          <ProgressLabelRow>
-            <ProgressLabel>Progress</ProgressLabel>
-            <ProgressPercent>
-              {progressPercent.toFixed(0)}%
-            </ProgressPercent>
-          </ProgressLabelRow>
-          <ProgressBar>
-            <ProgressBarFill $percentage={progressPercent} />
-          </ProgressBar>
-          <ProgressValuesRow>
-            <ProgressValue>{raisedInDollars}</ProgressValue>
-            <ProgressValue>of {goalInDollars}</ProgressValue>
-          </ProgressValuesRow>
+          <ProgressMeta>
+            <RaisedAmount>{fmt(raised)}</RaisedAmount>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <GoalAmount>of {fmt(goalAmount)}</GoalAmount>
+              <ProgressPct $pct={pct}>{pct.toFixed(0)}%</ProgressPct>
+            </div>
+          </ProgressMeta>
+          <ProgressTrack>
+            <ProgressFill $pct={pct} />
+          </ProgressTrack>
         </ProgressSection>
 
-        {/* Metrics */}
-        <MetricsGrid>
-          {campaign.campaign_type === 'fundraising' && (
-            <MetricCard>
-              <MetricLabel>Total Donation</MetricLabel>
-              <MetricValue>
-                {campaign.total_donation_amount 
-                  ? `$${(campaign.total_donation_amount / 100).toFixed(0)}` 
-                  : '$0'}
-              </MetricValue>
-            </MetricCard>
+        {/* Stats */}
+        <StatsRow>
+          {isSharing ? (
+            <Stat>
+              <Share2 size={13} />
+              <strong>{(campaign.share_count ?? 0).toLocaleString()}</strong> shares
+            </Stat>
+          ) : (
+            <Stat>
+              <Heart size={13} />
+              <strong>{(campaign.total_donation_amount ?? 0) > 0
+                ? fmt(campaign.total_donation_amount!)
+                : '$0'}
+              </strong>
+            </Stat>
           )}
-          {campaign.campaign_type === 'sharing' && (
-            <MetricCard>
-              <MetricLabel>Shares</MetricLabel>
-              <MetricValue>
-                {(campaign.share_count || 0).toLocaleString()}
-              </MetricValue>
-            </MetricCard>
-          )}
-          <MetricCard>
-            <MetricLabel>Supporters</MetricLabel>
-            <MetricValue>
-              {(campaign.total_donors || 0).toLocaleString()}
-            </MetricValue>
-          </MetricCard>
-        </MetricsGrid>
+          <Stat>
+            <Users size={13} />
+            <strong>{(campaign.total_donors ?? 0).toLocaleString()}</strong> supporters
+          </Stat>
+        </StatsRow>
 
         {/* Actions */}
-        <ActionsContainer>
-          {campaign.campaign_type === 'sharing' ? (
+        <Actions>
+          {isSharing ? (
             <>
-              <ActionButton
-                onClick={() => setIsShareWizardOpen(true)}
-                variant="primary"
-                size="sm"
-              >
+              <ShareEarnBtn onClick={() => setWizardOpen(true)}>
                 💰 Share to Earn
-              </ActionButton>
-              <ActionButton
-                onClick={handleShareLink}
-                variant="outline"
-                size="sm"
-              >
-                {copied ? <Check size={16} /> : <Copy size={16} />}
-              </ActionButton>
+              </ShareEarnBtn>
+              <CopyBtn onClick={handleCopy} $copied={copied} title="Copy link">
+                {copied ? <Check size={15} /> : <Copy size={15} />}
+              </CopyBtn>
             </>
           ) : (
             <>
-              <ActionButton
-                onClick={() => onDonate?.(campaign.id)}
-                variant="primary"
-                size="sm"
-              >
-                <Hand size={16} />
-                Donate
-              </ActionButton>
-              <ActionButton
-                onClick={() => onShare?.(campaign.id)}
-                variant="outline"
-                size="sm"
-              >
-                <Share2 size={16} />
-                Share
-              </ActionButton>
+              <DonateBtn onClick={() => onDonate?.(campaign.id)}>
+                <Heart size={14} /> Donate
+              </DonateBtn>
+              <ShareBtn onClick={() => onShare?.(campaign.id)} title="Share">
+                <Share2 size={15} />
+              </ShareBtn>
             </>
           )}
-        </ActionsContainer>
+        </Actions>
 
-        {/* View Details Link */}
-        <ViewDetailsLink href={`/campaigns/${campaign.id}`}>
-          View details →
-        </ViewDetailsLink>
-      </ContentSection>
+        <ViewLink href={`/campaigns/${campaign.id}`}>
+          View details <ArrowRight size={12} />
+        </ViewLink>
+      </Body>
 
-      {/* Share Wizard Modal */}
       <ShareWizard
-        isOpen={isShareWizardOpen}
-        onClose={() => setIsShareWizardOpen(false)}
+        isOpen={wizardOpen}
+        onClose={() => setWizardOpen(false)}
         campaignId={campaign.id}
         campaignTitle={campaign.title}
         campaignDescription={campaign.description || campaign.full_description}
         creator_name={campaign.creator_name}
         share_config={campaign.share_config}
       />
-    </CardContainer>
+    </Card>
   )
 }

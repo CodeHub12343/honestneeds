@@ -1380,8 +1380,8 @@ class CampaignService {
    */
   async publishCampaign(id: string): Promise<CampaignDetail> {
     try {
-      const response = await apiClient.post<CampaignDetail>(`/campaigns/${id}/publish`)
-      return response.data
+      const response = await apiClient.post<{ success: boolean; data: CampaignDetail }>(`/campaigns/${id}/publish`)
+      return response.data.data
     } catch (error: any) {
       console.error('Failed to publish campaign:', error)
       throw error
@@ -1393,8 +1393,8 @@ class CampaignService {
    */
   async pauseCampaign(id: string): Promise<CampaignDetail> {
     try {
-      const response = await apiClient.post<CampaignDetail>(`/campaigns/${id}/pause`)
-      return response.data
+      const response = await apiClient.post<{ success: boolean; data: CampaignDetail }>(`/campaigns/${id}/pause`)
+      return response.data.data
     } catch (error: any) {
       console.error('Failed to pause campaign:', error)
       throw error
@@ -1406,8 +1406,8 @@ class CampaignService {
    */
   async unpauseCampaign(id: string): Promise<CampaignDetail> {
     try {
-      const response = await apiClient.post<CampaignDetail>(`/campaigns/${id}/unpause`)
-      return response.data
+      const response = await apiClient.post<{ success: boolean; data: CampaignDetail }>(`/campaigns/${id}/unpause`)
+      return response.data.data
     } catch (error: any) {
       console.error('Failed to unpause campaign:', error)
       throw error
@@ -1419,8 +1419,8 @@ class CampaignService {
    */
   async completeCampaign(id: string): Promise<CampaignDetail> {
     try {
-      const response = await apiClient.post<CampaignDetail>(`/campaigns/${id}/complete`)
-      return response.data
+      const response = await apiClient.post<{ success: boolean; data: CampaignDetail }>(`/campaigns/${id}/complete`)
+      return response.data.data
     } catch (error: any) {
       console.error('Failed to complete campaign:', error)
       throw error
@@ -1432,10 +1432,10 @@ class CampaignService {
    */
   async increaseGoal(id: string, newGoalAmount: number): Promise<CampaignDetail> {
     try {
-      const response = await apiClient.post<CampaignDetail>(`/campaigns/${id}/increase-goal`, {
+      const response = await apiClient.post<{ success: boolean; data: CampaignDetail }>(`/campaigns/${id}/increase-goal`, {
         newGoalAmount,
       })
-      return response.data
+      return response.data.data
     } catch (error: any) {
       console.error('Failed to increase goal:', error)
       throw error

@@ -9,12 +9,10 @@ export const metadata: Metadata = {
   description: 'Create a new fundraising or sharing campaign on HonestNeed',
 }
 
-// Styled Components
 const PageContainer = styled.div`
-  padding-top: 2rem;
-  padding-bottom: 3rem;
   min-height: 100vh;
-  background-color: #f8fafc;
+  background: #f7f6f3;
+  padding: 0;
 `
 
 export default function CreateCampaignPage() {

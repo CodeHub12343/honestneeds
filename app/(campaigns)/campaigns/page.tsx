@@ -2,427 +2,439 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Menu, X } from 'lucide-react'
-import styled from 'styled-components'
+import styled, { keyframes } from 'styled-components'
 import { toast } from 'react-toastify'
+import { SlidersHorizontal, Sparkles } from 'lucide-react'
 import { useCampaigns, useNeedTypes } from '@/api/hooks/useCampaigns'
 import { useFilterStore } from '@/store/filterStore'
 import { CampaignGrid } from '@/components/campaign/CampaignGrid'
 import { SearchBar } from '@/components/campaign/SearchBar'
 import { FiltersSidebar } from '@/components/campaign/FiltersSidebar'
-import Button from '@/components/ui/Button'
 
-// Styled Components
-const PageContainer = styled.div`
+// ─── Animations ──────────────────────────────────────────────────────────────
+const fadeDown = keyframes`
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+`
+
+// ─── Page shell ───────────────────────────────────────────────────────────────
+const Page = styled.div`
   min-height: 100vh;
-  background-color: #f3f4f6;
+  background: #f7f5f1;
 `
 
-const Header = styled.div`
-  background-color: white;
-  border-bottom: 1px solid #e5e7eb;
-`
-
-const HeaderContent = styled.div`
-  max-width: 80rem;
-  margin: 0 auto;
-  padding: 1.5rem;
+// ─── Hero header ──────────────────────────────────────────────────────────────
+const Hero = styled.header`
+  background: #f7f5f1;
+  border-bottom: 1px solid rgba(226, 221, 214, 0.6);
+  padding: 24px 16px 20px;
 
   @media (min-width: 640px) {
-    padding: 1.5rem 1.5rem;
+    padding: 32px 24px 24px;
   }
 
   @media (min-width: 1024px) {
-    padding: 1.5rem 2rem;
+    padding: 40px 32px 28px;
   }
 `
 
-const HeaderTitle = styled.h1`
-  font-size: 1.875rem;
+const HeroInner = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: ${fadeDown} 400ms ease both;
+`
+
+const HeroEyebrow = styled.p`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: #111827;
-  margin-bottom: 0.5rem;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #6366f1;
+  background: #eef2ff;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin: 0 0 12px;
 `
 
-const HeaderDescription = styled.p`
-  color: #4b5563;
-`
-
-const MainContent = styled.div`
-  max-width: 80rem;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+const HeroTitle = styled.h1`
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f0f1a;
+  margin: 0 0 6px;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
 
   @media (min-width: 640px) {
-    padding: 2rem 1.5rem;
+    font-size: 2rem;
   }
 
   @media (min-width: 1024px) {
-    padding: 2rem 2rem;
+    font-size: 2.4rem;
   }
 `
 
-const SearchContainer = styled.div`
-  margin-bottom: 2rem;
+const HeroSub = styled.p`
+  font-size: 0.9rem;
+  color: #9ca3af;
+  margin: 0;
+  font-weight: 400;
+  line-height: 1.5;
+
+  @media (min-width: 640px) {
+    font-size: 1rem;
+  }
 `
 
-const LayoutGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
+// ─── Content area ─────────────────────────────────────────────────────────────
+const ContentWrap = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 12px 40px;
+
+  @media (min-width: 640px) {
+    padding: 20px 20px 48px;
+  }
 
   @media (min-width: 1024px) {
-    grid-template-columns: 1fr; /* Full width - no sidebar */
+    padding: 28px 32px 56px;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (min-width: 1280px) {
+    grid-template-columns: 260px 1fr;
+    gap: 28px;
   }
 `
 
-const SidebarContainer = styled.div`
-  display: none; /* ✅ Filters removed - sidebar hidden */
+// ─── Sidebar (desktop only) ───────────────────────────────────────────────────
+const SidebarCol = styled.aside`
+  display: none;
 
   @media (min-width: 1024px) {
     display: block;
+    position: sticky;
+    top: 80px;
   }
 `
 
-const SidebarSticky = styled.div`
-  position: sticky;
-  top: 5rem;
+// ─── Main column ──────────────────────────────────────────────────────────────
+const MainCol = styled.main`
+  min-width: 0;
 `
 
-const ContentColumn = styled.div`
-  @media (min-width: 1024px) {
-    grid-column: span 1;
+// ─── Toolbar (search + mobile filter btn) ─────────────────────────────────────
+const Toolbar = styled.div`
+  margin-bottom: 14px;
+
+  @media (min-width: 640px) {
+    margin-bottom: 16px;
   }
 `
 
-const MobileFilterToggle = styled.div`
-  display: none; /* ✅ Filters removed - toggle hidden */
-  margin-bottom: 1.5rem;
-
-  @media (min-width: 1024px) {
-    display: none;
-  }
+// ─── Results bar ──────────────────────────────────────────────────────────────
+const ResultsBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 8px;
+  flex-wrap: wrap;
 `
 
-const MobileFiltersContainer = styled.div<{ $isOpen: boolean }>`
-  display: none; /* ✅ Filters removed - container hidden */
-  margin-bottom: 2rem;
-  background-color: white;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+const ResultsCount = styled.p`
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 0;
+  font-weight: 500;
 
-  @media (min-width: 1024px) {
-    display: none;
-  }
+  strong { color: #374151; font-weight: 700; }
 `
 
-const ResultsInfo = styled.div`
-  margin-bottom: 1.5rem;
+// ─── Mobile filter button ─────────────────────────────────────────────────────
+const MobileFilterBtn = styled.button<{ $active: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1.5px solid ${p => p.$active ? '#6366f1' : '#e5e7eb'};
+  background: ${p => p.$active ? '#eef2ff' : 'white'};
+  color: ${p => p.$active ? '#6366f1' : '#6b7280'};
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 180ms;
+
+  @media (min-width: 1024px) { display: none; }
+
+  &:hover { border-color: #6366f1; color: #6366f1; background: #eef2ff; }
 `
 
-const ResultsText = styled.p`
-  font-size: 0.875rem;
-  color: #4b5563;
+const FilterBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #6366f1;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 800;
 `
 
-const PaginationContainer = styled.div`
-  margin-top: 3rem;
+// ─── Pagination ───────────────────────────────────────────────────────────────
+const Pagination = styled.nav`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 6px;
+  margin-top: 32px;
+  flex-wrap: wrap;
 `
 
-const MobileFilterButtonWrapper = styled.div`
-  width: 100%;
+const PageBtn = styled.button<{ $active?: boolean }>`
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1.5px solid ${p => p.$active ? '#6366f1' : '#e5e7eb'};
+  background: ${p => p.$active ? '#6366f1' : 'white'};
+  color: ${p => p.$active ? 'white' : '#374151'};
+  font-size: 0.82rem;
+  font-weight: ${p => p.$active ? '700' : '500'};
+  cursor: pointer;
+  transition: all 180ms;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  &:not(:disabled):hover {
+    border-color: #6366f1;
+    color: ${p => p.$active ? 'white' : '#6366f1'};
+    background: ${p => p.$active ? '#4f46e5' : '#eef2ff'};
+  }
 `
 
+const Ellipsis = styled.span`
+  font-size: 0.82rem;
+  color: #9ca3af;
+  padding: 0 4px;
+`
+
+// ─── Count active filters ─────────────────────────────────────────────────────
+function countActiveFilters(filters: any): number {
+  let count = 0
+  if (filters.needTypes?.length > 0) count++
+  if (filters.location) count++
+  if (filters.minGoal || filters.maxGoal) count++
+  if (filters.geographicScope && filters.geographicScope !== 'all') count++
+  if (filters.status && filters.status !== 'active') count++
+  if (filters.sortBy && filters.sortBy !== 'trending') count++
+  return count
+}
+
+// ─── Component ─────────────────────────────────────────────────────────────────
 export default function CampaignBrowsePage() {
   const router = useRouter()
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
-  const { filters, setSearchQuery, setNeedTypes, setLocation, setGoalRange, setStatus, setSortBy, setPage, resetFilters } = useFilterStore()
-  
-  // Default to 'active' status if not set or is 'all'
+  const {
+    filters,
+    setSearchQuery,
+    setNeedTypes,
+    setLocation,
+    setGoalRange,
+    setStatus,
+    setSortBy,
+    setPage,
+    resetFilters,
+  } = useFilterStore()
+
+  // Set default status on mount
   useEffect(() => {
-    console.log('🎯 [Campaigns Page] MOUNTED - Initial load', {
-      timestamp: new Date().toISOString(),
-      currentStatus: filters.status,
-      filters,
-    })
-    
     if (!filters.status || filters.status === 'all') {
-      console.log('📋 [Campaigns Page] Setting default status filter to "active" (exclude drafts)', {
-        currentStatus: filters.status,
-      })
-      setStatus('active') // Only show active campaigns by default
+      setStatus('active')
     }
   }, [setStatus])
 
-  // Log filter changes
-  useEffect(() => {
-    console.log('🔄 [Campaigns Page] FILTERS CHANGED', {
-      page: filters.page,
-      limit: filters.limit,
-      status: filters.status,
-      searchQuery: filters.searchQuery,
-      needTypes: filters.needTypes,
-      location: filters.location,
-      geographicScope: filters.geographicScope,
-    })
-  }, [filters])
-
-  const { data: campaignData, isLoading } = useCampaigns(
-    filters.page,
-    filters.limit,
-    filters
-  )
+  const { data: campaignData, isLoading } = useCampaigns(filters.page, filters.limit, filters)
   const { data: needTypesData } = useNeedTypes()
 
-  // Log API response
-  useEffect(() => {
-    if (campaignData) {
-      console.log('✅ [Campaigns Page] API RESPONSE RECEIVED', {
-        total: campaignData.total,
-        campaignCount: campaignData.campaigns?.length || 0,
-        page: campaignData.page,
-        totalPages: campaignData.totalPages,
-        campaigns: campaignData.campaigns?.map(c => ({
-          id: c.id || c._id,
-          title: c.title,
-          status: c.status,
-          created_at: c.created_at,
-        })),
-      })
-    } else if (isLoading) {
-      console.log('⏳ [Campaigns Page] LOADING campaigns...', { filters })
-    }
-  }, [campaignData, isLoading])
+  const handleSearch = useCallback((query: string) => setSearchQuery(query), [setSearchQuery])
 
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query)
-  }, [setSearchQuery])
+  const handleDonate = useCallback((id: string) => router.push(`/campaigns/${id}/donate`), [router])
 
-  const handleDonate = useCallback((campaignId: string) => {
-    router.push(`/campaigns/${campaignId}/donate`)
-  }, [router])
-
-  const handleShare = useCallback((campaignId: string) => {
-    // Copy share link to clipboard
-    const shareUrl = `${window.location.origin}/campaigns/${campaignId}`
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      // Show success toast
-      toast.success('Link copied to clipboard!', {
-        position: 'bottom-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      })
-    }).catch((err) => {
-      // Show error toast if copy fails
-      console.error('Failed to copy to clipboard:', err)
-      toast.error('Failed to copy link to clipboard', {
-        position: 'bottom-right',
-        autoClose: 3000,
-      })
+  const handleShare = useCallback((id: string) => {
+    const url = `${window.location.origin}/campaigns/${id}`
+    navigator.clipboard.writeText(url).then(() => {
+      toast.success('Link copied!', { position: 'bottom-right', autoClose: 2500 })
     })
   }, [])
 
-  const campaigns = campaignData?.campaigns || []
-  const totalPages = campaignData?.totalPages || 1
-  const needTypes = needTypesData || []
+  const handleFiltersChange = useCallback((updated: any) => {
+    if (updated.needTypes && JSON.stringify(updated.needTypes) !== JSON.stringify(filters.needTypes)) {
+      setNeedTypes(updated.needTypes)
+    }
+    if (updated.location !== filters.location || updated.locationRadius !== filters.locationRadius) {
+      setLocation(updated.location || '', updated.locationRadius || 0)
+    }
+    if (updated.minGoal !== filters.minGoal || updated.maxGoal !== filters.maxGoal) {
+      setGoalRange(updated.minGoal || 0, updated.maxGoal || 9999999 * 100)
+    }
+    if (updated.status !== filters.status) setStatus(updated.status)
+    if (updated.sortBy !== filters.sortBy) setSortBy(updated.sortBy)
+    if (updated.geographicScope !== filters.geographicScope) {
+      // handled via onFiltersChange spread
+    }
+    // Reset page
+    setPage(1)
+  }, [filters, setNeedTypes, setLocation, setGoalRange, setStatus, setSortBy, setPage])
+
+  const campaigns = campaignData?.campaigns ?? []
+  const total = campaignData?.total ?? 0
+  const totalPages = campaignData?.totalPages ?? 1
+  const needTypes = needTypesData ?? []
+  const activeFilterCount = countActiveFilters(filters)
+
+  // Pagination helpers
+  const getPageNumbers = () => {
+    const pages: (number | '…')[] = []
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else {
+      pages.push(1)
+      if (filters.page > 3) pages.push('…')
+      for (let i = Math.max(2, filters.page - 1); i <= Math.min(totalPages - 1, filters.page + 1); i++) {
+        pages.push(i)
+      }
+      if (filters.page < totalPages - 2) pages.push('…')
+      pages.push(totalPages)
+    }
+    return pages
+  }
+
+  const start = total > 0 ? (filters.page - 1) * filters.limit + 1 : 0
+  const end = Math.min(filters.page * filters.limit, total)
 
   return (
-    <PageContainer>
-      {/* Header */}
-      <Header>
-        <HeaderContent>
-          <HeaderTitle>Explore Campaigns</HeaderTitle>
-          <HeaderDescription>
-            Discover campaigns making a difference in our community
-          </HeaderDescription>
-        </HeaderContent>
-      </Header>
+    <Page>
+      {/* Hero */}
+      <Hero>
+        <HeroInner>
+          <HeroEyebrow>
+            <Sparkles size={12} />
+            Making a difference
+          </HeroEyebrow>
+          <HeroTitle>Explore Campaigns</HeroTitle>
+          <HeroSub>Discover initiatives making a real impact in communities around the world</HeroSub>
+        </HeroInner>
+      </Hero>
 
-      {/* Main Content */}
-      <MainContent>
-        {/* Search Bar */}
-        <SearchContainer>
-          <SearchBar onSearch={handleSearch} />
-        </SearchContainer>
+      {/* Content */}
+      <ContentWrap>
+        {/* Desktop Sidebar */}
+        <SidebarCol>
+          <FiltersSidebar
+            filters={filters}
+            needTypes={needTypes}
+            onFiltersChange={handleFiltersChange}
+            onReset={resetFilters}
+          />
+        </SidebarCol>
 
-        <LayoutGrid>
-          {/* Sidebar - Desktop */}
-          <SidebarContainer>
-            <SidebarSticky>
-              <FiltersSidebar
-                filters={filters}
-                needTypes={needTypes}
-                onFiltersChange={(updatedFilters) => {
-                  // Apply all filter changes
-                  if (
-                    updatedFilters.needTypes &&
-                    JSON.stringify(updatedFilters.needTypes) !==
-                      JSON.stringify(filters.needTypes)
-                  ) {
-                    setNeedTypes(updatedFilters.needTypes)
-                  }
-                  if (
-                    updatedFilters.location !== filters.location ||
-                    updatedFilters.locationRadius !== filters.locationRadius
-                  ) {
-                    setLocation(updatedFilters.location || '', updatedFilters.locationRadius || 0)
-                  }
-                  if (
-                    updatedFilters.minGoal !== filters.minGoal ||
-                    updatedFilters.maxGoal !== filters.maxGoal
-                  ) {
-                    setGoalRange(
-                      updatedFilters.minGoal || 0,
-                      updatedFilters.maxGoal || 9999999 * 100
-                    )
-                  }
-                  if (updatedFilters.status !== filters.status) {
-                    setStatus(updatedFilters.status)
-                  }
-                  if (updatedFilters.sortBy !== filters.sortBy) {
-                    setSortBy(updatedFilters.sortBy)
-                  }
-                }}
-                onReset={resetFilters}
-              />
-            </SidebarSticky>
-          </SidebarContainer>
+        {/* Main */}
+        <MainCol>
+          {/* Toolbar */}
+          <Toolbar>
+            <SearchBar onSearch={handleSearch} />
+          </Toolbar>
 
-          {/* Main Content */}
-          <ContentColumn>
-            {/* Mobile Filter Toggle */}
-            <MobileFilterToggle>
-              <MobileFilterButtonWrapper>
-                <Button
-                  onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-                  variant="outline"
-                  size="md"
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-                >
-                  {mobileFiltersOpen ? <X size={20} /> : <Menu size={20} />}
-                  {mobileFiltersOpen ? 'Hide Filters' : 'Show Filters'}
-                </Button>
-              </MobileFilterButtonWrapper>
-            </MobileFilterToggle>
+          {/* Results bar */}
+          <ResultsBar>
+            <ResultsCount>
+              {isLoading
+                ? 'Loading campaigns…'
+                : total > 0
+                  ? <><strong>{start}–{end}</strong> of <strong>{total.toLocaleString()}</strong> campaigns</>
+                  : 'No campaigns found'}
+            </ResultsCount>
+            <MobileFilterBtn
+              $active={activeFilterCount > 0}
+              onClick={() => setMobileFiltersOpen(true)}
+            >
+              <SlidersHorizontal size={14} />
+              Filters
+              {activeFilterCount > 0 && <FilterBadge>{activeFilterCount}</FilterBadge>}
+            </MobileFilterBtn>
+          </ResultsBar>
 
-            {/* Mobile Filters Sidebar */}
-            <MobileFiltersContainer $isOpen={mobileFiltersOpen}>
-              <FiltersSidebar
-                filters={filters}
-                needTypes={needTypes}
-                onFiltersChange={(updatedFilters) => {
-                  if (
-                    updatedFilters.needTypes &&
-                    JSON.stringify(updatedFilters.needTypes) !==
-                      JSON.stringify(filters.needTypes)
-                  ) {
-                    setNeedTypes(updatedFilters.needTypes)
-                  }
-                  if (
-                    updatedFilters.location !== filters.location ||
-                    updatedFilters.locationRadius !== filters.locationRadius
-                  ) {
-                    setLocation(updatedFilters.location || '', updatedFilters.locationRadius || 0)
-                  }
-                  if (
-                    updatedFilters.minGoal !== filters.minGoal ||
-                    updatedFilters.maxGoal !== filters.maxGoal
-                  ) {
-                    setGoalRange(
-                      updatedFilters.minGoal || 0,
-                      updatedFilters.maxGoal || 9999999 * 100
-                    )
-                  }
-                  if (updatedFilters.status !== filters.status) {
-                    setStatus(updatedFilters.status)
-                  }
-                  if (updatedFilters.sortBy !== filters.sortBy) {
-                    setSortBy(updatedFilters.sortBy)
-                  }
-                }}
-                onReset={() => {
-                  resetFilters()
-                  setMobileFiltersOpen(false)
-                }}
-                mobile
-                isOpen={mobileFiltersOpen}
-                onClose={() => setMobileFiltersOpen(false)}
-              />
-            </MobileFiltersContainer>
+          {/* Grid */}
+          <CampaignGrid
+            campaigns={campaigns}
+            isLoading={isLoading}
+            onDonate={handleDonate}
+            onShare={handleShare}
+          />
 
-            {/* Results Info */}
-            <ResultsInfo>
-              <ResultsText>
-                Showing {campaigns.length > 0 ? (filters.page - 1) * filters.limit + 1 : 0}-
-                {Math.min(filters.page * filters.limit, campaignData?.total || 0)} of{' '}
-                {campaignData?.total || 0} campaigns
-              </ResultsText>
-            </ResultsInfo>
+          {/* Pagination */}
+          {totalPages > 1 && !isLoading && (
+            <Pagination aria-label="Campaign pages">
+              <PageBtn
+                onClick={() => setPage(filters.page - 1)}
+                disabled={filters.page === 1}
+              >
+                ←
+              </PageBtn>
 
-            {/* Campaign Grid */}
-            <CampaignGrid
-              campaigns={campaigns}
-              isLoading={isLoading}
-              onDonate={handleDonate}
-              onShare={handleShare}
-            />
+              {getPageNumbers().map((p, i) =>
+                p === '…' ? (
+                  <Ellipsis key={`e${i}`}>…</Ellipsis>
+                ) : (
+                  <PageBtn
+                    key={p}
+                    $active={p === filters.page}
+                    onClick={() => setPage(p as number)}
+                  >
+                    {p}
+                  </PageBtn>
+                )
+              )}
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <PaginationContainer>
-                <Button
-                  onClick={() => setPage(Math.max(1, filters.page - 1))}
-                  disabled={filters.page === 1}
-                  variant="outline"
-                  size="sm"
-                >
-                  Previous
-                </Button>
+              <PageBtn
+                onClick={() => setPage(filters.page + 1)}
+                disabled={filters.page === totalPages}
+              >
+                →
+              </PageBtn>
+            </Pagination>
+          )}
+        </MainCol>
+      </ContentWrap>
 
-                {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
-                  const pageNum =
-                    filters.page > 3
-                      ? filters.page - 2 + i
-                      : i + 1
-                  if (pageNum > totalPages) return null
-                  return (
-                    <Button
-                      key={pageNum}
-                      onClick={() => setPage(pageNum)}
-                      variant={pageNum === filters.page ? 'primary' : 'outline'}
-                      size="sm"
-                    >
-                      {pageNum}
-                    </Button>
-                  )
-                })}
-
-                <Button
-                  onClick={() => setPage(Math.min(totalPages, filters.page + 1))}
-                  disabled={filters.page === totalPages}
-                  variant="outline"
-                  size="sm"
-                >
-                  Next
-                </Button>
-              </PaginationContainer>
-            )}
-          </ContentColumn>
-        </LayoutGrid>
-      </MainContent>
-    </PageContainer>
+      {/* Mobile Filters Drawer */}
+      <FiltersSidebar
+        filters={filters}
+        needTypes={needTypes}
+        onFiltersChange={handleFiltersChange}
+        onReset={() => { resetFilters(); setMobileFiltersOpen(false) }}
+        mobile
+        isOpen={mobileFiltersOpen}
+        onClose={() => setMobileFiltersOpen(false)}
+      />
+    </Page>
   )
 }

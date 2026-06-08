@@ -1,121 +1,196 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Search, X } from 'lucide-react'
-import styled from 'styled-components'
+import { Search, X, SlidersHorizontal } from 'lucide-react'
+import styled, { css, keyframes } from 'styled-components'
 
 interface SearchBarProps {
   onSearch: (query: string) => void
   placeholder?: string
   debounceMs?: number
+  /** Optional: show a filter count pill when filters are active */
+  activeFilterCount?: number
+  onFilterClick?: () => void
 }
 
-// Styled Components
-const Container = styled.div`
+// ─── Animations ──────────────────────────────────────────────────────────────
+const fadeIn = keyframes`
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+`
+
+// ─── Wrapper ──────────────────────────────────────────────────────────────────
+const Wrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`
+
+// ─── Input shell ──────────────────────────────────────────────────────────────
+const Shell = styled.div<{ $focused: boolean }>`
+  flex: 1;
   position: relative;
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1.5px solid ${p => p.$focused ? '#6366f1' : '#e5e7eb'};
+  box-shadow: ${p => p.$focused
+    ? '0 0 0 3px rgba(99,102,241,0.12), 0 1px 4px rgba(0,0,0,0.06)'
+    : '0 1px 3px rgba(0,0,0,0.04)'};
+  transition: border-color 200ms, box-shadow 200ms;
+  overflow: hidden;
 `
 
-const SearchIcon = styled(Search)`
+// ─── Icon left ────────────────────────────────────────────────────────────────
+const SearchIconWrap = styled.div<{ $focused: boolean }>`
   position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
+  left: 14px;
+  display: flex;
+  align-items: center;
   pointer-events: none;
+  color: ${p => p.$focused ? '#6366f1' : '#d1d5db'};
+  transition: color 200ms;
 `
 
-const StyledInput = styled.input`
+// ─── Input ────────────────────────────────────────────────────────────────────
+const Input = styled.input`
   width: 100%;
-  padding-left: 2.5rem;
-  padding-right: 2.5rem;
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  font-size: 1rem;
+  height: 48px;
+  padding: 0 44px 0 44px;
+  border: none;
+  background: transparent;
+  font-size: 0.9rem;
   color: #111827;
-  background-color: white;
-  transition: all 0.2s ease;
+  outline: none;
+  font-family: inherit;
 
   &::placeholder {
-    color: #9ca3af;
+    color: #c4c9d4;
+    font-weight: 400;
   }
 
-  &:focus {
-    outline: none;
-    border-color: transparent;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1),
-      0 0 0 3px rgb(99, 102, 241);
+  @media (min-width: 640px) {
+    height: 52px;
+    font-size: 0.95rem;
   }
 `
 
-const ClearButton = styled.button`
+// ─── Clear button ────────────────────────────────────────────────────────────
+const ClearBtn = styled.button`
   position: absolute;
-  right: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   border: none;
+  background: #e5e7eb;
+  color: #6b7280;
   cursor: pointer;
-  color: #9ca3af;
-  transition: color 0.2s ease;
-  padding: 0.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 180ms, color 180ms;
+  animation: ${fadeIn} 150ms ease;
+  flex-shrink: 0;
+
+  &:hover { background: #d1d5db; color: #111827; }
+`
+
+// ─── Filter button ────────────────────────────────────────────────────────────
+const FilterBtn = styled.button<{ $active: boolean }>`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1.5px solid ${p => p.$active ? '#6366f1' : '#e5e7eb'};
+  background: ${p => p.$active ? '#eef2ff' : '#ffffff'};
+  color: ${p => p.$active ? '#6366f1' : '#6b7280'};
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 180ms;
+  white-space: nowrap;
 
   &:hover {
-    color: #4b5563;
+    border-color: #6366f1;
+    background: #eef2ff;
+    color: #6366f1;
   }
 
-  &:focus {
-    outline: none;
+  @media (min-width: 640px) {
+    height: 52px;
   }
 `
 
+const FilterCount = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #6366f1;
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 700;
+`
+
+// ─── Component ─────────────────────────────────────────────────────────────────
 export function SearchBar({
   onSearch,
-  placeholder = 'Search campaigns...',
+  placeholder = 'Search campaigns…',
   debounceMs = 300,
+  activeFilterCount = 0,
+  onFilterClick,
 }: SearchBarProps) {
   const [value, setValue] = useState('')
-  const [debouncedValue, setDebouncedValue] = useState('')
+  const [focused, setFocused] = useState(false)
 
-  // Debounce the search query
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedValue(value)
-    }, debounceMs)
-
-    return () => clearTimeout(timer)
-  }, [value, debounceMs])
-
-  // Call onSearch when debounced value changes
-  useEffect(() => {
-    onSearch(debouncedValue)
-  }, [debouncedValue, onSearch])
-
-  const handleClear = () => {
-    setValue('')
-  }
+    const t = setTimeout(() => onSearch(value), debounceMs)
+    return () => clearTimeout(t)
+  }, [value, debounceMs, onSearch])
 
   return (
-    <Container>
-      <SearchIcon size={20} />
-      <StyledInput
-        type="text"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder={placeholder}
-      />
-      {value && (
-        <ClearButton
-          onClick={handleClear}
-          aria-label="Clear search"
+    <Wrapper>
+      <Shell $focused={focused}>
+        <SearchIconWrap $focused={focused}>
+          <Search size={18} strokeWidth={2.2} />
+        </SearchIconWrap>
+
+        <Input
+          type="text"
+          value={value}
+          placeholder={placeholder}
+          onChange={e => setValue(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          aria-label="Search campaigns"
+        />
+
+        {value && (
+          <ClearBtn onClick={() => setValue('')} aria-label="Clear search">
+            <X size={13} strokeWidth={2.5} />
+          </ClearBtn>
+        )}
+      </Shell>
+
+      {onFilterClick && (
+        <FilterBtn
+          $active={activeFilterCount > 0}
+          onClick={onFilterClick}
+          aria-label={`Filters${activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ''}`}
         >
-          <X size={20} />
-        </ClearButton>
+          <SlidersHorizontal size={16} />
+          <span className="hide-xs">Filters</span>
+          {activeFilterCount > 0 && <FilterCount>{activeFilterCount}</FilterCount>}
+        </FilterBtn>
       )}
-    </Container>
+    </Wrapper>
   )
 }

@@ -1,264 +1,308 @@
 'use client'
 
-import styled from 'styled-components'
-import { useState, useCallback, useEffect } from 'react'
+import styled, { css, keyframes } from 'styled-components'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useAuthStore } from '@/store/authStore'
 import Button from '@/components/ui/Button'
-import { Menu, X, ChevronDown, Home, PlusCircle, MessageSquare, Settings, LogOut, Shield } from 'lucide-react'
+import {
+  Menu,
+  X,
+  ChevronDown,
+  ChevronRight,
+  LayoutDashboard,
+  Compass,
+  Gift,
+  Heart,
+  Share2,
+  FileText,
+  Banknote,
+  Settings,
+  Layers,
+  Briefcase,
+  LogOut,
+  User,
+} from 'lucide-react'
+
+// ─── Types ─────────────────────────────────────────────────────────────────
 
 interface NavLink {
   label: string
   href: string
   roles?: string[]
   icon?: React.ReactNode
-  badge?: number
   group?: string
 }
 
-// Public navigation links
+// ─── Nav Link Definitions ───────────────────────────────────────────────────
+
 const publicNavLinks: NavLink[] = [
-  { label: 'Browse Campaigns', href: '/campaigns', icon: '🎯', group: 'Explore' },
-  { label: 'Sweepstakes', href: '/sweepstakes', icon: '🎁', group: 'Explore' },
+  { label: 'Browse Campaigns', href: '/campaigns', icon: <Compass size={15} />, group: 'Explore' },
+  { label: 'Sweepstakes', href: '/sweepstakes', icon: <Gift size={15} />, group: 'Explore' },
 ]
 
-// Authenticated user navigation links (all roles)
 const authenticatedNavLinks: NavLink[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: '📊', roles: ['supporter', 'creator', 'admin'] },
+  {
+    label: 'Dashboard',
+    href: '/dashboard',
+    icon: <LayoutDashboard size={15} />,
+    roles: ['supporter', 'creator', 'admin'],
+    group: 'General',
+  },
 ]
 
-// Supporter-specific links
 const supporterNavLinks: NavLink[] = [
-  { label: 'My Donations', href: '/donations', icon: '❤️', roles: ['supporter'], group: 'My Activity' },
-  { label: 'My Shares', href: '/shares', icon: '📤', roles: ['supporter'], group: 'My Activity' },
-  { label: 'Sweepstakes', href: '/sweepstakes', icon: '🎁', roles: ['supporter'], group: 'My Activity' },
+  { label: 'My Donations', href: '/donations', icon: <Heart size={15} />, roles: ['supporter'], group: 'My Activity' },
+  { label: 'My Shares', href: '/shares', icon: <Share2 size={15} />, roles: ['supporter'], group: 'My Activity' },
+  { label: 'Sweepstakes', href: '/sweepstakes', icon: <Gift size={15} />, roles: ['supporter'], group: 'My Activity' },
 ]
 
-// Creator-specific links
 const creatorNavLinks: NavLink[] = [
-  { label: 'My Campaigns', href: '/dashboard/campaigns', icon: '📝', roles: ['creator', 'admin'], group: 'Creator Tools' },
-  { label: 'Sharers Payouts', href: '/sharers-payouts', icon: '💳', roles: ['creator', 'admin'], group: 'Creator Tools' },
-  { label: 'Settings', href: '/settings', icon: '⚙️', roles: ['creator', 'admin'], group: 'Creator Tools' },
+  { label: 'My Campaigns', href: '/dashboard/campaigns', icon: <FileText size={15} />, roles: ['creator', 'admin'], group: 'Creator Tools' },
+  { label: 'Sharers Payouts', href: '/sharers-payouts', icon: <Banknote size={15} />, roles: ['creator', 'admin'], group: 'Creator Tools' },
+  { label: 'Settings', href: '/settings', icon: <Settings size={15} />, roles: ['creator', 'admin'], group: 'Creator Tools' },
 ]
 
-// Shared authenticated links
-const sharedAuthLinks: NavLink[] = []
-
-// Admin-specific links
 const adminNavLinks: NavLink[] = [
-  
-  { label: 'Manage Sweepstakes', href: '/admin/sweepstakes', icon: '🎲', roles: ['admin'], group: 'Admin Panel' },
-  { label: 'Manage Sponsorships', href: '/admin/sponsorships', icon: '💼', roles: ['admin'], group: 'Admin Panel' },
-  
+  { label: 'Manage Sweepstakes', href: '/admin/sweepstakes', icon: <Layers size={15} />, roles: ['admin'], group: 'Admin' },
+  { label: 'Manage Sponsorships', href: '/admin/sponsorships', icon: <Briefcase size={15} />, roles: ['admin'], group: 'Admin' },
 ]
 
-// Styled Components
-const NavWrapper = styled.nav`
+// ─── Design Tokens ──────────────────────────────────────────────────────────
+
+const BRAND = '#667eea'
+const BRAND_DARK = '#5a6fd8'
+const BRAND_BG = 'rgba(102, 126, 234, 0.08)'
+const BRAND_BG_HOVER = 'rgba(102, 126, 234, 0.12)'
+
+// ─── Styled Components ──────────────────────────────────────────────────────
+
+const NavbarRoot = styled.header`
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  background: rgba(247, 245, 241, 0.92);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid rgba(226, 221, 214, 0.6);
+  transition: box-shadow 200ms ease;
+
+  &[data-scrolled='true'] {
+    box-shadow: 0 1px 24px rgba(0, 0, 0, 0.06);
+  }
+`
+
+const NavInner = styled.nav`
   max-width: 1400px;
   margin: 0 auto;
+  height: 60px;
   display: flex;
-  height: 4rem;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1rem;
-  position: relative;
-
-  @media (min-width: 640px) {
-    padding: 0 1.5rem;
-  }
+  padding: 0 1.25rem;
+  gap: 1rem;
 
   @media (min-width: 1024px) {
     padding: 0 2rem;
-    gap: 2rem;
   }
 `
+
+// ── Logo ────────────────────────────────────────────────────────────────────
 
 const Logo = styled(Link)`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: #667eea;
   text-decoration: none;
-  transition: color 200ms ease-out;
+  flex-shrink: 0;
+  outline: none;
+  border-radius: 6px;
 
-  &:hover {
-    color: #764ba2;
-  }
-
-  &:focus {
-    outline: 2px solid #667eea;
-    outline-offset: 4px;
-    border-radius: 4px;
+  &:focus-visible {
+    box-shadow: 0 0 0 2px ${BRAND};
   }
 
   img {
-    display: block;
-    height: 24px;
+    height: 26px;
     width: auto;
-  }
-
-  span:first-child {
-    font-size: 1.5rem;
-  }
-
-  &:hover svg {
-    color: #764ba2;
-  }
-
-  span:nth-child(2) {
-    @media (max-width: 639px) {
-      display: none;
-    }
-  }
-
-  span:nth-child(3) {
-    @media (min-width: 640px) {
-      display: none;
-    }
+    display: block;
   }
 `
+
+const LogoText = styled.span`
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -0.02em;
+
+  @media (max-width: 639px) {
+    display: none;
+  }
+`
+
+const LogoShort = styled.span`
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -0.02em;
+
+  @media (min-width: 640px) {
+    display: none;
+  }
+`
+
+// ── Desktop Nav ──────────────────────────────────────────────────────────────
 
 const DesktopNav = styled.div`
   display: none;
   align-items: center;
-  gap: 0.25rem;
-  justify-content: center;
+  gap: 0.125rem;
   flex: 1;
+  justify-content: center;
 
   @media (min-width: 1024px) {
     display: flex;
   }
 `
 
-const NavDropdown = styled.div`
-  position: relative;
-  display: inline-block;
-`
-
-const NavDropdownButton = styled.button<{ $isActive?: boolean }>`
-  display: flex;
+const flatLinkStyle = css<{ $active?: boolean }>`
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 7px;
+  font-size: 0.8375rem;
   font-weight: 500;
-  color: ${props => props.$isActive ? '#667eea' : '#1f2937'};
-  background: none;
+  color: ${({ $active }) => ($active ? BRAND : '#374151')};
+  text-decoration: none;
+  background: ${({ $active }) => ($active ? BRAND_BG : 'transparent')};
   border: none;
   cursor: pointer;
-  text-decoration: none;
-  transition: background-color 200ms ease-out, color 200ms ease-out;
-  border-bottom: ${props => props.$isActive ? '2px solid #667eea' : 'none'};
-  padding-bottom: ${props => props.$isActive ? 'calc(0.5rem - 2px)' : '0.5rem'};
+  transition: background 150ms ease, color 150ms ease;
+  position: relative;
+  white-space: nowrap;
 
   &:hover {
-    background-color: #f3f4f6;
-    color: #667eea;
+    background: ${({ $active }) => ($active ? BRAND_BG_HOVER : '#f5f5f5')};
+    color: ${({ $active }) => ($active ? BRAND : '#111')};
   }
 
-  &:focus {
-    outline: 2px solid #667eea;
-    outline-offset: 2px;
-    border-radius: 2px;
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px ${BRAND};
   }
 `
 
-const NavDropdownChevron = styled(ChevronDown)<{ $isOpen: boolean }>`
-  transition: transform 200ms ease-out;
-  transform: ${props => (props.$isOpen ? 'rotate(180deg)' : 'rotate(0deg)')};
-  width: 16px;
-  height: 16px;
+const FlatNavLink = styled(Link)<{ $active?: boolean }>`
+  ${flatLinkStyle}
 `
 
-const NavDropdownMenu = styled.div`
+// ── Dropdown ────────────────────────────────────────────────────────────────
+
+const DropdownWrapper = styled.div`
+  position: relative;
+`
+
+const DropdownTrigger = styled.button<{ $active?: boolean }>`
+  ${flatLinkStyle}
+  background: ${({ $active }) => ($active ? BRAND_BG : 'transparent')};
+  color: ${({ $active }) => ($active ? BRAND : '#374151')};
+
+  &:hover {
+    background: ${({ $active }) => ($active ? BRAND_BG_HOVER : '#f5f5f5')};
+    color: ${({ $active }) => ($active ? BRAND : '#111')};
+  }
+`
+
+const DropdownChevron = styled(ChevronDown)<{ $open: boolean }>`
+  width: 14px;
+  height: 14px;
+  transition: transform 200ms ease;
+  transform: ${({ $open }) => ($open ? 'rotate(180deg)' : 'rotate(0deg)')};
+  opacity: 0.6;
+`
+
+const dropdownIn = keyframes`
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+`
+
+const DropdownMenu = styled.div`
   position: absolute;
-  top: calc(100% + 0.5rem);
-  left: 0;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
   min-width: 200px;
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  padding: 0.5rem 0;
-  z-index: 50;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 0.35rem;
+  z-index: 200;
+  animation: ${dropdownIn} 150ms ease forwards;
 `
 
-const NavDropdownLink = styled(Link)<{ $isActive?: boolean }>`
+const PortaledDropdownMenu = styled.div<{ $top: number; $left: number }>`
+  position: fixed;
+  top: ${({ $top }) => $top}px;
+  left: ${({ $left }) => $left}px;
+  transform: translateX(-50%);
+  min-width: 200px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 0.35rem;
+  z-index: 9990;
+  animation: ${dropdownIn} 150ms ease forwards;
+  pointer-events: auto;
+`
+
+const DropdownItem = styled(Link)<{ $active?: boolean }>`
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  color: ${props => props.$isActive ? '#667eea' : '#1f2937'};
-  text-decoration: none;
-  transition: background-color 200ms ease-out;
-  font-weight: ${props => props.$isActive ? '600' : '500'};
-
-  &:hover {
-    background-color: #f3f4f6;
-    color: #667eea;
-  }
-
-  &:focus {
-    outline: 2px solid #667eea;
-    outline-offset: -2px;
-  }
-`
-
-const NavLink = styled(Link)<{ $isActive?: boolean }>`
+  gap: 0.6rem;
   padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
+  border-radius: 8px;
+  font-size: 0.8375rem;
   font-weight: 500;
-  color: ${props => props.$isActive ? '#667eea' : '#1f2937'};
+  color: ${({ $active }) => ($active ? BRAND : '#374151')};
+  background: ${({ $active }) => ($active ? BRAND_BG : 'transparent')};
   text-decoration: none;
-  transition: background-color 200ms ease-out, color 200ms ease-out;
-  border-bottom: ${props => props.$isActive ? '2px solid #667eea' : 'none'};
-  padding-bottom: ${props => props.$isActive ? 'calc(0.5rem - 2px)' : '0.5rem'};
+  transition: background 120ms ease, color 120ms ease;
+
+  svg {
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
 
   &:hover {
-    background-color: #f3f4f6;
-    color: #667eea;
+    background: ${({ $active }) => ($active ? BRAND_BG_HOVER : '#f5f5f5')};
+    color: ${({ $active }) => ($active ? BRAND_DARK : '#111')};
   }
 
-  &:focus {
-    outline: 2px solid #667eea;
-    outline-offset: 2px;
-    border-radius: 2px;
-  }
-`
-
-const NavGroup = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  border-left: 1px solid #e5e7eb;
-  padding-left: 0.5rem;
-  margin-left: 0.5rem;
-
-  &:first-child {
-    border-left: none;
-    margin-left: 0;
-    padding-left: 0;
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px ${BRAND} inset;
   }
 `
+
+// ── Right section ────────────────────────────────────────────────────────────
 
 const RightSection = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-
-  @media (min-width: 640px) {
-    gap: 1rem;
-  }
+  flex-shrink: 0;
 `
 
-const AuthButtonsContainer = styled.div`
+const AuthButtons = styled.div`
   display: none;
+  align-items: center;
   gap: 0.5rem;
 
   @media (min-width: 640px) {
@@ -266,566 +310,813 @@ const AuthButtonsContainer = styled.div`
   }
 `
 
-const UserMenuContainer = styled.div`
-  display: none;
+// ── Avatar / User Menu ───────────────────────────────────────────────────────
+
+const AvatarMenuWrapper = styled.div`
   position: relative;
+  display: none;
 
   @media (min-width: 768px) {
     display: block;
   }
 `
 
-const UserMenuButton = styled.button`
+const AvatarButton = styled.button`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
-  background: none;
-  border: none;
+  gap: 0.4rem;
+  padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: transparent;
   cursor: pointer;
-  color: #1f2937;
-  transition: background-color 200ms ease-out;
+  transition: background 150ms ease, border-color 150ms ease;
 
   &:hover {
-    background-color: #f3f4f6;
+    background: #f5f5f5;
+    border-color: rgba(0, 0, 0, 0.15);
   }
 
-  &:focus {
-    outline: 2px solid #667eea;
-    outline-offset: 2px;
-  }
-
-  span {
-    font-size: 0.875rem;
-    font-weight: 500;
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px ${BRAND};
   }
 `
 
-const ChevronIcon = styled(ChevronDown)<{ $isOpen: boolean }>`
-  transition: transform 200ms ease-out;
-  transform: ${props => (props.$isOpen ? 'rotate(180deg)' : 'rotate(0deg)')};
-`
-
-const UserMenuDropdown = styled.div`
-  position: absolute;
-  right: 0;
-  margin-top: 0.5rem;
-  width: 12rem;
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
-  z-index: 50;
-`
-
-const MenuLink = styled(Link)`
-  display: block;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  color: #1f2937;
-  text-decoration: none;
-  transition: background-color 200ms ease-out;
-
-  &:hover {
-    background-color: #f3f4f6;
-    color: #667eea;
-  }
-
-  &:focus {
-    outline: 2px solid #667eea;
-    outline-offset: -2px;
-  }
-`
-
-const MenuButton = styled.button`
-  width: 100%;
-  text-align: left;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  color: #dc2626;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: background-color 200ms ease-out;
-
-  &:hover {
-    background-color: #f3f4f6;
-  }
-
-  &:focus {
-    outline: 2px solid #667eea;
-    outline-offset: -2px;
-  }
-`
-
-const MenuDivider = styled.hr`
-  margin: 0.25rem 0;
-  border: none;
-  border-top: 1px solid #e5e7eb;
-`
-
-const MobileMenuButton = styled.button`
-  display: inline-flex;
+const Avatar = styled.div`
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: ${BRAND};
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  background: none;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+`
+
+const AvatarChevron = styled(ChevronDown)<{ $open: boolean }>`
+  width: 14px;
+  height: 14px;
+  color: #6b7280;
+  transition: transform 200ms ease;
+  transform: ${({ $open }) => ($open ? 'rotate(180deg)' : 'rotate(0deg)')};
+`
+
+const UserDropdown = styled.div`
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 220px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 0.35rem;
+  z-index: 200;
+  animation: ${dropdownIn} 150ms ease forwards;
+`
+
+const PortaledUserDropdown = styled.div<{ $top: number; $left: number }>`
+  position: fixed;
+  top: ${({ $top }) => $top}px;
+  left: ${({ $left }) => $left}px;
+  transform: translateX(-100%);
+  width: 220px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 0.35rem;
+  z-index: 9990;
+  animation: ${dropdownIn} 150ms ease forwards;
+  pointer-events: auto;
+`
+
+const UserInfo = styled.div`
+  padding: 0.6rem 0.75rem 0.5rem;
+  pointer-events: none;
+`
+
+const UserName = styled.p`
+  font-size: 0.8375rem;
+  font-weight: 600;
+  color: #111;
+  margin: 0 0 2px;
+  line-height: 1.3;
+`
+
+const UserEmail = styled.p`
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin: 0;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`
+
+const DropdownDivider = styled.hr`
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  margin: 0.35rem 0;
+`
+
+const DropdownActionButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8375rem;
+  font-weight: 500;
+  color: #ef4444;
+  background: transparent;
   border: none;
   cursor: pointer;
-  color: #1f2937;
-  transition: background-color 200ms ease-out;
+  text-align: left;
+  transition: background 120ms ease;
+
+  &:hover {
+    background: #fef2f2;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #ef4444 inset;
+  }
+
+  svg {
+    opacity: 0.8;
+    flex-shrink: 0;
+  }
+`
+
+// ── Mobile Button ────────────────────────────────────────────────────────────
+
+const MobileMenuToggle = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(226, 221, 214, 0.8);
+  background: transparent;
+  color: #374151;
+  cursor: pointer;
+  transition: background 150ms ease;
 
   @media (min-width: 768px) {
     display: none;
   }
 
   &:hover {
-    background-color: #f3f4f6;
+    background: rgba(26, 95, 168, 0.08);
   }
 
-  &:focus {
-    outline: 2px solid #667eea;
-    outline-offset: 2px;
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px ${BRAND};
   }
 `
 
-const MobileMenu = styled.div`
-  position: absolute;
-  top: 4rem;
-  left: 0;
+// ── Mobile Drawer ────────────────────────────────────────────────────────────
+
+const DrawerOverlay = styled(motion.div)`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 9998;
+  backdrop-filter: blur(2px);
+`
+
+const DrawerPanel = styled(motion.div)`
+  position: fixed;
+  top: 0;
   right: 0;
-  background-color: white;
-  border-bottom: 1px solid #e5e7eb;
-  display: none;
-  z-index: 40;
-  max-height: calc(100vh - 4rem);
-  overflow-y: auto;
-
-  @media (max-width: 767px) {
-    display: block;
-  }
-`
-
-const MobileMenuContent = styled.div`
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 1rem;
+  bottom: 0;
+  width: min(340px, 90vw);
+  background: #f7f5f1;
+  z-index: 9999;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  overflow: hidden;
 `
 
-const MobileMenuLink = styled(Link)`
-  display: block;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
+const DrawerHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(226, 221, 214, 0.6);
+  flex-shrink: 0;
+`
+
+const DrawerLogoText = styled.span`
   font-size: 1rem;
-  font-weight: 500;
-  color: #1f2937;
-  text-decoration: none;
-  transition: background-color 200ms ease-out;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -0.02em;
+`
+
+const DrawerClose = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  border: 1px solid rgba(226, 221, 214, 0.8);
+  background: transparent;
+  color: #374151;
+  cursor: pointer;
+  transition: background 150ms ease;
 
   &:hover {
-    background-color: #f3f4f6;
-    color: #667eea;
-  }
-
-  &:focus {
-    outline: 2px solid #667eea;
-    outline-offset: 2px;
+    background: rgba(26, 95, 168, 0.08);
   }
 `
 
-const MobileMenuSection = styled.div`
-  border-top: 1px solid #e5e7eb;
-  padding-top: 0.5rem;
-  margin-top: 0.5rem;
+const DrawerBody = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
 `
 
-const MobileMenuButton2 = styled.button`
-  width: 100%;
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
-  font-size: 1rem;
+const DrawerLink = styled(Link)<{ $active?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 9px;
+  font-size: 0.9rem;
   font-weight: 500;
-  color: #dc2626;
-  background: none;
+  color: ${({ $active }) => ($active ? BRAND : '#374151')};
+  background: ${({ $active }) => ($active ? BRAND_BG : 'transparent')};
+  text-decoration: none;
+  transition: background 120ms ease, color 120ms ease;
+
+  svg {
+    flex-shrink: 0;
+    opacity: ${({ $active }) => ($active ? 1 : 0.6)};
+  }
+
+  &:hover {
+    background: ${({ $active }) => ($active ? BRAND_BG_HOVER : 'rgba(226, 221, 214, 0.4)')};
+    color: ${({ $active }) => ($active ? BRAND_DARK : '#111')};
+  }
+`
+
+const DrawerSection = styled.div`
+  margin-top: 0.5rem;
+`
+
+const DrawerSectionHeader = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  background: transparent;
   border: none;
   cursor: pointer;
-  transition: background-color 200ms ease-out;
+  border-radius: 6px;
+  transition: background 120ms ease;
 
   &:hover {
-    background-color: #f3f4f6;
-  }
-
-  &:focus {
-    outline: 2px solid #667eea;
-    outline-offset: 2px;
+    background: #f9f9f9;
+    color: #6b7280;
   }
 `
 
+const DrawerSectionLinks = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  overflow: hidden;
+`
+
+const DrawerFooter = styled.div`
+  padding: 0.75rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  flex-shrink: 0;
+`
+
+const DrawerUserRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.5rem;
+`
+
+const DrawerUserInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`
+
+const DrawerUserName = styled.p`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111;
+  margin: 0;
+  line-height: 1.3;
+`
+
+const DrawerUserEmail = styled.p`
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`
+
+const DrawerSignOut = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border-radius: 9px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #ef4444;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 120ms ease;
+  text-align: left;
+
+  &:hover {
+    background: #fef2f2;
+  }
+
+  svg {
+    opacity: 0.8;
+    flex-shrink: 0;
+  }
+`
+
+const DrawerAuthButtons = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+`
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function getInitials(name?: string): string {
+  if (!name) return 'U'
+  return name
+    .split(' ')
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false)
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({})
+  const [scrolled, setScrolled] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+  const [dropdownPos, setDropdownPos] = useState<Record<string, { top: number; left: number }>>({})
+  const [userMenuPos, setUserMenuPos] = useState<{ top: number; left: number } | null>(null)
+
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const userMenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const triggerRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const avatarButtonRef = useRef<HTMLButtonElement | null>(null)
+
   const router = useRouter()
   const pathname = usePathname()
   const { isAuthenticated, user, clearAuth } = useAuthStore()
 
-  // Close menus on route change
+  // SSR-safe portal mount
+  useEffect(() => { setIsMounted(true) }, [])
+
+  // Scroll listener for shadow
   useEffect(() => {
-    setIsOpen(false)
-    setIsUserMenuOpen(false)
+    const onScroll = () => setScrolled(window.scrollY > 4)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // Close on route change
+  useEffect(() => {
+    setMobileOpen(false)
+    setUserMenuOpen(false)
     setOpenDropdown(null)
   }, [pathname])
 
+  // Escape key closes everything
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpenDropdown(null)
+        setUserMenuOpen(false)
+        setMobileOpen(false)
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [])
+
+  // Lock body scroll when drawer open
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [mobileOpen])
+
+  // Dropdown hover handlers (shared leaveTimer fixes the gap bug)
+  const handleDropdownEnter = useCallback((group: string) => {
+    if (leaveTimer.current) clearTimeout(leaveTimer.current)
+    const el = triggerRefs.current[group]
+    if (el) {
+      const rect = el.getBoundingClientRect()
+      setDropdownPos(prev => ({
+        ...prev,
+        [group]: { top: rect.bottom + 8, left: rect.left + rect.width / 2 }
+      }))
+    }
+    setOpenDropdown(group)
+  }, [])
+
+  const handleDropdownLeave = useCallback(() => {
+    leaveTimer.current = setTimeout(() => setOpenDropdown(null), 150)
+  }, [])
+
+  // User menu hover handlers
+  const handleUserMenuEnter = useCallback(() => {
+    if (userMenuTimer.current) clearTimeout(userMenuTimer.current)
+    const el = avatarButtonRef.current
+    if (el) {
+      const rect = el.getBoundingClientRect()
+      setUserMenuPos({ top: rect.bottom + 8, left: rect.right })
+    }
+    setUserMenuOpen(true)
+  }, [])
+
+  const handleUserMenuLeave = useCallback(() => {
+    userMenuTimer.current = setTimeout(() => setUserMenuOpen(false), 150)
+  }, [])
+
   const handleLogout = useCallback(async () => {
     clearAuth()
-    setIsUserMenuOpen(false)
-    setIsOpen(false)
+    setUserMenuOpen(false)
+    setMobileOpen(false)
     router.push('/')
   }, [clearAuth, router])
 
-  // Filter and organize navigation links by role
-  const getNavigationLinks = useCallback(() => {
-    if (!isAuthenticated) {
-      return { public: publicNavLinks, authenticated: [] }
-    }
+  const isActive = useCallback(
+    (href: string) => pathname === href || pathname?.startsWith(href + '/'),
+    [pathname]
+  )
 
-    const userRole = user?.role || 'supporter'
-    const allAuthLinks: NavLink[] = [
-      ...authenticatedNavLinks.filter(l => !l.roles || l.roles.includes(userRole)),
+  const toggleSection = useCallback((section: string) => {
+    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }))
+  }, [])
+
+  // ── Nav link resolution ────────────────────────────────────────────────────
+
+  const getVisibleLinks = useCallback((): NavLink[] => {
+    if (!isAuthenticated) return publicNavLinks
+
+    const role = user?.role || 'supporter'
+    const links: NavLink[] = [
+      ...authenticatedNavLinks.filter((l) => !l.roles || l.roles.includes(role)),
+      ...publicNavLinks,
     ]
 
-    // Add public links that don't require auth (for authenticated users)
-    allAuthLinks.push(
-      ...publicNavLinks.filter(l => !l.roles || l.roles.includes(userRole))
-    )
-
-    // Add role-specific links
-    if (userRole === 'supporter') {
-      // Supporters get their own links
-      allAuthLinks.push(...supporterNavLinks.filter(l => l.roles?.includes('supporter')))
-    } else if (userRole === 'creator') {
-      // Creators get creator-specific, supporter, and shared links
-      allAuthLinks.push(...creatorNavLinks.filter(l => l.roles?.includes('creator')))
-      allAuthLinks.push(...supporterNavLinks.filter(l => l.roles?.includes('supporter')))
-      allAuthLinks.push(...sharedAuthLinks.filter(l => l.roles?.includes('creator')))
-    } else if (userRole === 'admin') {
-      // Admins get everything except supporter-specific links
-      allAuthLinks.push(...creatorNavLinks.filter(l => l.roles?.includes('admin')))
-      allAuthLinks.push(...adminNavLinks.filter(l => l.roles?.includes('admin')))
-      allAuthLinks.push(...supporterNavLinks.filter(l => l.roles?.includes('supporter')))
-      allAuthLinks.push(...sharedAuthLinks.filter(l => l.roles?.includes('creator')))
+    if (role === 'supporter') {
+      links.push(...supporterNavLinks.filter((l) => l.roles?.includes('supporter')))
+    } else if (role === 'creator') {
+      links.push(...creatorNavLinks.filter((l) => l.roles?.includes('creator')))
+      links.push(...supporterNavLinks.filter((l) => l.roles?.includes('supporter')))
+    } else if (role === 'admin') {
+      links.push(...creatorNavLinks.filter((l) => l.roles?.includes('admin')))
+      links.push(...adminNavLinks.filter((l) => l.roles?.includes('admin')))
+      links.push(...supporterNavLinks.filter((l) => l.roles?.includes('supporter')))
     }
 
-    return { public: [], authenticated: allAuthLinks }
+    return links
   }, [isAuthenticated, user?.role])
 
-  const isLinkActive = useCallback((href: string) => {
-    return pathname === href || pathname?.startsWith(href + '/')
-  }, [pathname])
-
-  // Group links by their group property
-  const groupLinksByCategory = useCallback((links: NavLink[]) => {
-    const grouped: { [key: string]: NavLink[] } = {}
-    links.forEach(link => {
-      const group = link.group || 'Other'
-      if (!grouped[group]) {
-        grouped[group] = []
-      }
-      grouped[group].push(link)
+  const groupLinks = useCallback((links: NavLink[]) => {
+    const grouped: Record<string, NavLink[]> = {}
+    links.forEach((link) => {
+      const g = link.group || 'General'
+      if (!grouped[g]) grouped[g] = []
+      grouped[g].push(link)
     })
     return grouped
   }, [])
 
-  const navLinks = getNavigationLinks()
-  const visibleLinks = isAuthenticated ? navLinks.authenticated : navLinks.public
+  const visibleLinks = getVisibleLinks()
+  const grouped = groupLinks(visibleLinks)
+  const groupEntries = Object.entries(grouped)
 
-  const toggleMobileMenu = useCallback(() => {
-    setIsOpen(!isOpen)
-    setIsUserMenuOpen(false)
-  }, [isOpen])
-
-  const handleNavClick = useCallback(() => {
-    setIsOpen(false)
-  }, [])
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <NavWrapper role="navigation" aria-label="Main navigation">
-      {/* Logo */}
-      <Logo href="/" aria-label="HonestNeed home">
-        <img src="/1000019752.png" alt="HonestNeed" />
-        <span>HonestNeed</span>
-        <span>HN</span>
-      </Logo>
+    <>
+      <NavbarRoot data-scrolled={scrolled}>
+        <NavInner role="navigation" aria-label="Main navigation">
 
-      {/* Desktop Navigation */}
-      <DesktopNav>
-        {(() => {
-          const grouped = groupLinksByCategory(visibleLinks)
-          const groups = Object.keys(grouped).sort()
-          
-          return groups.map(group => {
-            const groupLinks = grouped[group]
-            const anyActive = groupLinks.some(link => isLinkActive(link.href))
-            
-            return (
-              <NavDropdown key={group}>
-                <NavDropdownButton
-                  onClick={() => setOpenDropdown(openDropdown === group ? null : group)}
-                  onMouseEnter={() => setOpenDropdown(group)}
-                  onMouseLeave={() => setOpenDropdown(null)}
-                  $isActive={anyActive}
-                  title={group}
-                >
-                  {groupLinks[0]?.icon && <span>{groupLinks[0].icon}</span>}
-                  <span>{group}</span>
-                  <NavDropdownChevron size={16} $isOpen={openDropdown === group} />
-                </NavDropdownButton>
+          {/* Logo */}
+          <Logo href="/" aria-label="HonestNeed home">
+            <img src="/1000019752.png" alt="" aria-hidden="true" />
+            <LogoText>HonestNeed</LogoText>
+            <LogoShort>HN</LogoShort>
+          </Logo>
 
-                {openDropdown === group && (
-                  <NavDropdownMenu
-                    onMouseEnter={() => setOpenDropdown(group)}
-                    onMouseLeave={() => setOpenDropdown(null)}
+          {/* Desktop Nav */}
+          <DesktopNav>
+            {groupEntries.map(([group, links]) => {
+              const anyActive = links.some((l) => isActive(l.href))
+
+              // Single link in group → flat link
+              if (links.length === 1) {
+                const link = links[0]
+                return (
+                  <FlatNavLink
+                    key={link.href}
+                    href={link.href}
+                    $active={isActive(link.href)}
+                    aria-current={isActive(link.href) ? 'page' : undefined}
                   >
-                    {groupLinks.map((link) => (
-                      <NavDropdownLink
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => {
-                          handleNavClick()
-                          setOpenDropdown(null)
-                        }}
-                        $isActive={isLinkActive(link.href)}
-                        title={link.label}
-                      >
-                        {link.icon && <span>{link.icon}</span>}
-                        <span>{link.label}</span>
-                      </NavDropdownLink>
-                    ))}
-                  </NavDropdownMenu>
-                )}
-              </NavDropdown>
-            )
-          })
-        })()}
-      </DesktopNav>
+                    {link.icon}
+                    {link.label}
+                  </FlatNavLink>
+                )
+              }
 
-      {/* Right side: Auth buttons / User menu */}
-      <RightSection>
-        {!isAuthenticated ? (
-          <AuthButtonsContainer>
-            <Button
-              variant="ghost"
-              as="link"
-              href="/login"
-              size="sm"
-            >
-              Sign In
-            </Button>
-            <Button
-              variant="primary"
-              as="link"
-              href="/register"
-              size="sm"
-            >
-              Register
-            </Button>
-          </AuthButtonsContainer>
-        ) : (
-          <UserMenuContainer>
-            <UserMenuButton
-              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              aria-haspopup="true"
-              aria-expanded={isUserMenuOpen}
-              aria-label={`User menu for ${user?.name || 'User'}`}
-            >
-              <span>{user?.name}</span>
-              <ChevronIcon size={18} $isOpen={isUserMenuOpen} />
-            </UserMenuButton>
-
-            {/* User Menu Dropdown */}
-            {isUserMenuOpen && (
-              <UserMenuDropdown
-                role="menu"
-                aria-orientation="vertical"
-              >
-                <MenuDivider />
-                <MenuButton
-                  onClick={handleLogout}
-                  role="menuitem"
+              // Multiple links → dropdown
+              return (
+                <DropdownWrapper
+                  key={group}
+                  onMouseEnter={() => handleDropdownEnter(group)}
+                  onMouseLeave={handleDropdownLeave}
                 >
-                  Sign Out
-                </MenuButton>
-              </UserMenuDropdown>
-            )}
-          </UserMenuContainer>
-        )}
+                  <DropdownTrigger
+                    ref={(el) => { triggerRefs.current[group] = el }}
+                    $active={anyActive}
+                    aria-haspopup="true"
+                    aria-expanded={openDropdown === group}
+                  >
+                    {links[0].icon}
+                    {group}
+                    <DropdownChevron $open={openDropdown === group} />
+                  </DropdownTrigger>
 
-        {/* Mobile Menu Button */}
-        <MobileMenuButton
-          onClick={toggleMobileMenu}
-          aria-expanded={isOpen}
-          aria-label="Toggle navigation menu"
-        >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </MobileMenuButton>
-      </RightSection>
+                  {openDropdown === group && dropdownPos[group] && isMounted &&
+                    createPortal(
+                      <PortaledDropdownMenu
+                        $top={dropdownPos[group].top}
+                        $left={dropdownPos[group].left}
+                        onMouseEnter={() => handleDropdownEnter(group)}
+                        onMouseLeave={handleDropdownLeave}
+                        role="menu"
+                      >
+                        {links.map((link) => (
+                          <DropdownItem
+                            key={link.href}
+                            href={link.href}
+                            $active={isActive(link.href)}
+                            role="menuitem"
+                            aria-current={isActive(link.href) ? 'page' : undefined}
+                            onClick={() => setOpenDropdown(null)}
+                          >
+                            {link.icon}
+                            {link.label}
+                          </DropdownItem>
+                        ))}
+                      </PortaledDropdownMenu>,
+                      document.body
+                    )
+                  }
+                </DropdownWrapper>
+              )
+            })}
+          </DesktopNav>
 
-      {/* Mobile Menu */}
-      {isOpen && (
-        <MobileMenu role="navigation" aria-label="Mobile navigation">
-          <MobileMenuContent>
-            {/* All visible links organized by section */}
+          {/* Right section */}
+          <RightSection>
             {!isAuthenticated ? (
-              <>
-                {/* Public links */}
-                {publicNavLinks.map((link) => (
-                  <MobileMenuLink
-                    key={link.href}
-                    href={link.href}
-                    onClick={handleNavClick}
-                  >
-                    {link.icon} {link.label}
-                  </MobileMenuLink>
-                ))}
-
-                {/* Mobile Auth Buttons */}
-                <MobileMenuSection>
-                  <Button
-                    variant="ghost"
-                    as="link"
-                    href="/login"
-                    onClick={handleNavClick}
-                  >
-                    Sign In
-                  </Button>
-                  <Button
-                    variant="primary"
-                    as="link"
-                    href="/register"
-                    onClick={handleNavClick}
-                  >
-                    Register
-                  </Button>
-                </MobileMenuSection>
-              </>
+              <AuthButtons>
+                <Button variant="ghost" as="link" href="/login" size="sm">
+                  Sign in
+                </Button>
+                <Button variant="primary" as="link" href="/register" size="sm">
+                  Get started
+                </Button>
+              </AuthButtons>
             ) : (
-              <>
-                {/* Browse Campaigns - always available */}
-                <MobileMenuLink
-                  href="/campaigns"
-                  onClick={handleNavClick}
+              <AvatarMenuWrapper
+                onMouseEnter={handleUserMenuEnter}
+                onMouseLeave={handleUserMenuLeave}
+              >
+                <AvatarButton
+                  ref={avatarButtonRef}
+                  aria-haspopup="true"
+                  aria-expanded={userMenuOpen}
+                  aria-label={`Account menu for ${user?.name || 'User'}`}
                 >
-                  🎯 Browse Campaigns
-                </MobileMenuLink>
+                  <Avatar aria-hidden="true">{getInitials(user?.name)}</Avatar>
+                  <AvatarChevron $open={userMenuOpen} />
+                </AvatarButton>
 
-                {/* Authenticated general links */}
-                {authenticatedNavLinks.filter(l => !l.roles || l.roles.includes(user?.role || 'supporter')).map((link) => (
-                  <MobileMenuLink
-                    key={link.href}
-                    href={link.href}
-                    onClick={handleNavClick}
-                  >
-                    {link.icon} {link.label}
-                  </MobileMenuLink>
-                ))}
-
-                {/* Supporter-specific section */}
-                {(user?.role === 'supporter' || user?.role === 'creator' || user?.role === 'admin') && supporterNavLinks.length > 0 && (
-                  <MobileMenuSection>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', padding: '0.5rem 0.75rem' }}>
-                      My Activities
-                    </div>
-                    {supporterNavLinks.map((link) => (
-                      <MobileMenuLink
-                        key={link.href}
-                        href={link.href}
-                        onClick={handleNavClick}
+                {userMenuOpen && userMenuPos && isMounted &&
+                  createPortal(
+                    <PortaledUserDropdown
+                      $top={userMenuPos.top}
+                      $left={userMenuPos.left}
+                      onMouseEnter={handleUserMenuEnter}
+                      onMouseLeave={handleUserMenuLeave}
+                      role="menu"
+                      aria-orientation="vertical"
+                    >
+                      <UserInfo aria-hidden="true">
+                        <UserName>{user?.name}</UserName>
+                        <UserEmail>{user?.email || 'No email set'}</UserEmail>
+                      </UserInfo>
+                      <DropdownDivider />
+                      <DropdownActionButton
+                        role="menuitem"
+                        onClick={handleLogout}
                       >
-                        {link.icon} {link.label}
-                      </MobileMenuLink>
-                    ))}
-                  </MobileMenuSection>
-                )}
-
-                {/* Creator-specific section */}
-                {(user?.role === 'creator' || user?.role === 'admin') && creatorNavLinks.filter(l => l.roles?.includes(user?.role || '')).length > 0 && (
-                  <MobileMenuSection>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', padding: '0.5rem 0.75rem' }}>
-                      Creator Tools
-                    </div>
-                    {creatorNavLinks.filter(l => l.roles?.includes(user?.role || '')).map((link) => (
-                      <MobileMenuLink
-                        key={link.href}
-                        href={link.href}
-                        onClick={handleNavClick}
-                      >
-                        {link.icon} {link.label}
-                      </MobileMenuLink>
-                    ))}
-                  </MobileMenuSection>
-                )}
-
-                {/* Admin-specific section */}
-                {user?.role === 'admin' && adminNavLinks.filter(l => l.roles?.includes('admin')).length > 0 && (
-                  <MobileMenuSection>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#ef4444', textTransform: 'uppercase', padding: '0.5rem 0.75rem' }}>
-                      Admin Panel
-                    </div>
-                    {adminNavLinks.filter(l => l.roles?.includes('admin')).map((link) => (
-                      <MobileMenuLink
-                        key={link.href}
-                        href={link.href}
-                        onClick={handleNavClick}
-                      >
-                        {link.icon} {link.label}
-                      </MobileMenuLink>
-                    ))}
-                  </MobileMenuSection>
-                )}
-
-                {/* Shared authenticated links */}
-                {sharedAuthLinks.filter(l => l.roles?.includes(user?.role || 'supporter')).length > 0 && (
-                  <MobileMenuSection>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', padding: '0.5rem 0.75rem' }}>
-                      Communication
-                    </div>
-                    {sharedAuthLinks.filter(l => l.roles?.includes(user?.role || 'supporter')).map((link) => (
-                      <MobileMenuLink
-                        key={link.href}
-                        href={link.href}
-                        onClick={handleNavClick}
-                      >
-                        {link.icon} {link.label}
-                      </MobileMenuLink>
-                    ))}
-                  </MobileMenuSection>
-                )}
-
-                {/* Mobile User Menu */}
-                <MobileMenuSection>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', padding: '0.5rem 0.75rem' }}>
-                    Account
-                  </div>
-                  <MobileMenuButton2 onClick={handleLogout}>
-                    🚪 Sign Out
-                  </MobileMenuButton2>
-                </MobileMenuSection>
-              </>
+                        <LogOut size={14} />
+                        Sign out
+                      </DropdownActionButton>
+                    </PortaledUserDropdown>,
+                    document.body
+                  )
+                }
+              </AvatarMenuWrapper>
             )}
-          </MobileMenuContent>
-        </MobileMenu>
+
+            {/* Mobile toggle */}
+            <MobileMenuToggle
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open navigation menu"
+              aria-expanded={mobileOpen}
+            >
+              <Menu size={18} />
+            </MobileMenuToggle>
+          </RightSection>
+        </NavInner>
+      </NavbarRoot>
+
+      {/* ── Mobile Drawer (portalled to body to escape stacking contexts) ── */}
+      {isMounted && createPortal(
+        <AnimatePresence>
+          {mobileOpen && (
+            <>
+              <DrawerOverlay
+                key="overlay"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => setMobileOpen(false)}
+                aria-hidden="true"
+              />
+
+              <DrawerPanel
+                key="panel"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Navigation menu"
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', stiffness: 380, damping: 38, mass: 0.8 }}
+              >
+                {/* Drawer Header */}
+                <DrawerHeader>
+                  <DrawerLogoText>HonestNeed</DrawerLogoText>
+                  <DrawerClose
+                    onClick={() => setMobileOpen(false)}
+                    aria-label="Close navigation menu"
+                  >
+                    <X size={16} />
+                  </DrawerClose>
+                </DrawerHeader>
+
+                {/* Drawer Body */}
+                <DrawerBody>
+                  {!isAuthenticated ? (
+                    <>
+                      {publicNavLinks.map((link) => (
+                        <DrawerLink
+                          key={link.href}
+                          href={link.href}
+                          $active={isActive(link.href)}
+                          onClick={() => setMobileOpen(false)}
+                        >
+                          {link.icon}
+                          {link.label}
+                        </DrawerLink>
+                      ))}
+                      <DrawerAuthButtons>
+                        <Button variant="ghost" as="link" href="/login" onClick={() => setMobileOpen(false)}>
+                          Sign in
+                        </Button>
+                        <Button variant="primary" as="link" href="/register" onClick={() => setMobileOpen(false)}>
+                          Get started
+                        </Button>
+                      </DrawerAuthButtons>
+                    </>
+                  ) : (
+                    groupEntries.map(([group, links]) => {
+                      const isSectionOpen = openSections[group] !== false
+                      return (
+                        <DrawerSection key={group}>
+                          <DrawerSectionHeader
+                            onClick={() => toggleSection(group)}
+                            aria-expanded={isSectionOpen}
+                          >
+                            <span>{group}</span>
+                            <ChevronRight
+                              size={13}
+                              style={{
+                                transform: isSectionOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                                transition: 'transform 200ms ease',
+                                opacity: 0.5,
+                              }}
+                            />
+                          </DrawerSectionHeader>
+                          <AnimatePresence initial={false}>
+                            {isSectionOpen && (
+                              <DrawerSectionLinks
+                                key="content"
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                              >
+                                {links.map((link) => (
+                                  <DrawerLink
+                                    key={link.href}
+                                    href={link.href}
+                                    $active={isActive(link.href)}
+                                    onClick={() => setMobileOpen(false)}
+                                  >
+                                    {link.icon}
+                                    {link.label}
+                                  </DrawerLink>
+                                ))}
+                              </DrawerSectionLinks>
+                            )}
+                          </AnimatePresence>
+                        </DrawerSection>
+                      )
+                    })
+                  )}
+                </DrawerBody>
+
+                {/* Drawer Footer */}
+                {isAuthenticated && (
+                  <DrawerFooter>
+                    <DrawerUserRow>
+                      <Avatar>{getInitials(user?.name)}</Avatar>
+                      <DrawerUserInfo>
+                        <DrawerUserName>{user?.name}</DrawerUserName>
+                        <DrawerUserEmail>{user?.email || 'No email set'}</DrawerUserEmail>
+                      </DrawerUserInfo>
+                    </DrawerUserRow>
+                    <DrawerSignOut onClick={handleLogout}>
+                      <LogOut size={15} />
+                      Sign out
+                    </DrawerSignOut>
+                  </DrawerFooter>
+                )}
+              </DrawerPanel>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
-    </NavWrapper>
+    </>
   )
 }

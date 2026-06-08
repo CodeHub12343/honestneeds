@@ -1,10 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import styled from 'styled-components'
-import { ChevronDown, X, MapPin, Map, Globe, Zap } from 'lucide-react'
+import styled, { keyframes } from 'styled-components'
+import { ChevronDown, X, MapPin, Map, Globe, Zap, RotateCcw } from 'lucide-react'
 import { CampaignFilters } from '@/store/filterStore'
-import { GEOGRAPHIC_SCOPES } from '@/utils/validationSchemas'
 
 interface FiltersSidebarProps {
   filters: CampaignFilters
@@ -16,374 +15,565 @@ interface FiltersSidebarProps {
   mobile?: boolean
 }
 
-const NEED_TYPES_VISIBLE = 10
+// ─── Animations ──────────────────────────────────────────────────────────────
+const slideIn = keyframes`
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+`
 
-// Styled Components
-const Container = styled.div`
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`
+
+// ─── Mobile overlay ───────────────────────────────────────────────────────────
+const Backdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 200;
+  animation: ${fadeIn} 200ms ease;
+  backdrop-filter: blur(2px);
+`
+
+const Drawer = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(340px, 90vw);
+  background: white;
+  z-index: 201;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  animation: ${slideIn} 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.12);
 `
 
-const MobileHeader = styled.div`
+const DrawerHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
-`
-
-const MobileTitle = styled.h2`
-  font-size: 1.125rem;
-  font-weight: 600;
-`
-
-const CloseButton = styled.button`
-  padding: 0.25rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #111827;
-  transition: color 0.2s ease;
-
-  &:hover {
-    color: #6366f1;
-  }
-`
-
-const Section = styled.div`
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 1rem;
-
-  &:last-of-type {
-    border-bottom: none;
-  }
-`
-
-const SectionButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  font-weight: 600;
-  color: #111827;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color 0.2s ease;
-
-  &:hover {
-    color: #6366f1;
-  }
-`
-
-const ChevronIcon = styled(ChevronDown)<{ $expanded: boolean }>`
-  transform: ${(props) => (props.$expanded ? 'rotate(0deg)' : 'rotate(-90deg)')};
-  transition: transform 0.2s ease;
+  padding: 18px 20px;
+  border-bottom: 1px solid #f0f0f0;
   flex-shrink: 0;
 `
 
-const SectionContent = styled.div`
-  margin-top: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+const DrawerTitle = styled.h2`
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.01em;
 `
 
-const CheckboxLabel = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  color: #374151;
-  transition: color 0.2s ease;
-
-  &:hover {
-    color: #6366f1;
-  }
-
-  input[type='checkbox'] {
-    cursor: pointer;
-    border-radius: 0.25rem;
-    border: 1px solid #d1d5db;
-  }
-`
-
-const RadioLabel = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  color: #374151;
-  transition: color 0.2s ease;
-
-  &:hover {
-    color: #6366f1;
-  }
-
-  input[type='radio'] {
-    cursor: pointer;
-    border: 1px solid #d1d5db;
-  }
-`
-
-const LabelText = styled.span`
-  flex: 1;
-`
-
-const CountBadge = styled.span`
-  font-size: 0.75rem;
+const CloseBtn = styled.button`
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: white;
   color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 180ms, color 180ms;
+
+  &:hover { background: #f3f4f6; color: #111827; }
 `
 
-const ShowMoreButton = styled.button`
-  font-size: 0.875rem;
+const DrawerScroll = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 999px; }
+`
+
+const DrawerFooter = styled.div`
+  padding: 14px 20px;
+  border-top: 1px solid #f0f0f0;
+  flex-shrink: 0;
+`
+
+// ─── Sidebar container (desktop) ──────────────────────────────────────────────
+const Sidebar = styled.div`
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+`
+
+const SidebarHead = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid #f0f0f0;
+`
+
+const SidebarTitle = styled.h2`
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.01em;
+`
+
+// ─── Section ──────────────────────────────────────────────────────────────────
+const Section = styled.div`
+  border-bottom: 1px solid #f7f7f7;
+
+  &:last-child { border-bottom: none; }
+`
+
+const SectionToggle = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover { background: #fafafa; }
+`
+
+const SectionLabel = styled.span`
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #374151;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+`
+
+const ChevronIcon = styled(ChevronDown)<{ $open: boolean }>`
+  color: #9ca3af;
+  transition: transform 200ms;
+  transform: ${p => p.$open ? 'rotate(0deg)' : 'rotate(-90deg)'};
+  flex-shrink: 0;
+`
+
+const SectionContent = styled.div<{ $visible: boolean }>`
+  display: ${p => p.$visible ? 'flex' : 'none'};
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 18px 14px;
+`
+
+// ─── Checkbox / Radio option ───────────────────────────────────────────────────
+const OptionLabel = styled.label<{ $selected?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 0.83rem;
+  color: #374151;
+  background: ${p => p.$selected ? '#f5f3ff' : 'transparent'};
+  transition: background 150ms;
+
+  &:hover { background: ${p => p.$selected ? '#f5f3ff' : '#fafafa'}; }
+
+  input { display: none; }
+`
+
+const OptionDot = styled.span<{ $selected: boolean; $type?: 'radio' | 'check' }>`
+  width: 16px;
+  height: 16px;
+  border-radius: ${p => p.$type === 'radio' ? '50%' : '5px'};
+  border: 1.5px solid ${p => p.$selected ? '#6366f1' : '#d1d5db'};
+  background: ${p => p.$selected ? '#6366f1' : 'white'};
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms;
+
+  &::after {
+    content: '';
+    display: ${p => p.$selected ? 'block' : 'none'};
+    width: ${p => p.$type === 'radio' ? '6px' : '9px'};
+    height: ${p => p.$type === 'radio' ? '6px' : '7px'};
+    border-radius: ${p => p.$type === 'radio' ? '50%' : '0'};
+    background: ${p => p.$type === 'radio' ? 'white' : 'transparent'};
+    border-bottom: ${p => p.$type !== 'radio' ? '2px solid white' : 'none'};
+    border-right: ${p => p.$type !== 'radio' ? '2px solid white' : 'none'};
+    transform: ${p => p.$type !== 'radio' ? 'rotate(45deg) translate(-1px, -1px)' : 'none'};
+  }
+`
+
+const OptionText = styled.span`
+  flex: 1;
+  font-weight: 500;
+`
+
+const OptionCount = styled.span`
+  font-size: 0.72rem;
+  color: #9ca3af;
+  background: #f3f4f6;
+  padding: 1px 7px;
+  border-radius: 999px;
+`
+
+// ─── Show more ────────────────────────────────────────────────────────────────
+const ShowMore = styled.button`
+  font-size: 0.78rem;
   color: #6366f1;
   background: none;
   border: none;
   cursor: pointer;
-  margin-top: 0.5rem;
-  font-weight: 500;
-  transition: color 0.2s ease;
+  font-weight: 600;
+  padding: 2px 10px;
+  margin-top: 2px;
+  align-self: flex-start;
 
-  &:hover {
-    color: #4f46e5;
-  }
+  &:hover { color: #4f46e5; }
 `
 
-const InputGroup = styled.div`
-  margin-top: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-`
-
-const InputLabel = styled.label`
-  display: block;
-  font-size: 0.875rem;
-  color: #4b5563;
-  margin-bottom: 0.25rem;
-`
-
+// ─── Text input ───────────────────────────────────────────────────────────────
 const TextInput = styled.input`
   width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1.5px solid #e5e7eb;
+  font-size: 0.83rem;
   color: #111827;
-  background-color: white;
-  transition: all 0.2s ease;
+  background: white;
+  outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 200ms, box-shadow 200ms;
 
   &:focus {
-    outline: none;
     border-color: #6366f1;
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
   }
 
-  &:disabled {
-    background-color: #f3f4f6;
-    color: #9ca3af;
-    cursor: not-allowed;
-  }
+  &::placeholder { color: #c4c9d4; }
 `
 
-const RangeInput = styled.input`
-  width: 100%;
-  cursor: pointer;
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-`
-
-const RadiusLabel = styled.label`
-  display: block;
-  font-size: 0.875rem;
-  color: #4b5563;
-  margin-bottom: 0.5rem;
-`
-
-const GoalRangeWrapper = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-`
-
-const GoalInput = styled(TextInput)`
-  flex: 1;
-`
-
-const RangeHelper = styled.p`
+const InputLabel = styled.label`
   font-size: 0.75rem;
+  font-weight: 600;
   color: #6b7280;
-  margin-top: 0.5rem;
+  margin-bottom: 6px;
+  display: block;
 `
 
-const ScopeOptionWrapper = styled.div`
+const InputGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`
+
+// ─── Reset button ─────────────────────────────────────────────────────────────
+const ResetBtn = styled.button`
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-`
-
-const ScopeIcon = styled.div`
-  display: flex;
-  align-items: center;
-  color: inherit;
-`
-
-const ResetButton = styled.button`
+  justify-content: center;
+  gap: 6px;
   width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid #d1d5db;
-  background-color: white;
-  color: #374151;
-  font-weight: 500;
-  border-radius: 0.5rem;
+  height: 38px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  background: white;
+  color: #6b7280;
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 180ms;
 
-  &:hover {
-    background-color: #f9fafb;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: #6366f1;
-  }
+  &:hover { border-color: #6366f1; color: #6366f1; background: #fafafa; }
 `
 
-const MobileOverlay = styled.div<{ $isOpen: boolean }>`
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  transform: ${(props) => (props.$isOpen ? 'translateX(0)' : 'translateX(-100%)')};
-  transition: transform 0.3s ease;
-`
-
-const MobileBackdrop = styled.div`
-  position: absolute;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+// ─── Apply button (mobile) ────────────────────────────────────────────────────
+const ApplyBtn = styled.button`
+  width: 100%;
+  height: 44px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+  color: white;
+  font-size: 0.88rem;
+  font-weight: 700;
   cursor: pointer;
+  transition: opacity 180ms;
+
+  &:hover { opacity: 0.9; }
 `
 
-const MobileSidebar = styled.div`
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 20rem;
-  background-color: white;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-  overflow-y: auto;
-`
+// ─── Scope icons ──────────────────────────────────────────────────────────────
+const scopeOptions = [
+  { value: 'all', label: 'All Scopes', icon: null },
+  { value: 'local', label: 'Local', icon: <MapPin size={13} /> },
+  { value: 'regional', label: 'Regional', icon: <Map size={13} /> },
+  { value: 'national', label: 'National', icon: <Globe size={13} /> },
+  { value: 'global', label: 'Global', icon: <Zap size={13} /> },
+]
 
-export function FiltersSidebar({
+const statusOptions = [
+  { value: 'all', label: 'All Campaigns' },
+  { value: 'active', label: 'Active' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'paused', label: 'Paused' },
+]
+
+const sortOptions = [
+  { value: 'trending', label: 'Trending' },
+  { value: 'newest', label: 'Newest First' },
+  { value: 'raised', label: 'Most Raised' },
+  { value: 'goalAsc', label: 'Goal: Low → High' },
+  { value: 'goalDesc', label: 'Goal: High → Low' },
+]
+
+const MAX_VISIBLE = 6
+
+// ─── Inner content ────────────────────────────────────────────────────────────
+function FiltersContent({
   filters,
   needTypes,
   onFiltersChange,
   onReset,
-  isOpen = true,
   onClose,
   mobile = false,
 }: FiltersSidebarProps) {
-  const [expandedNeedMore, setExpandedNeedMore] = useState(false)
-  const [expandedSections, setExpandedSections] = useState({
+  const [sections, setSections] = useState({
     needType: true,
     scope: false,
-    location: true,
-    goal: true,
+    location: false,
+    goal: false,
     status: true,
     sort: true,
   })
+  const [showAllTypes, setShowAllTypes] = useState(false)
 
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }))
-  }
+  const toggle = (key: keyof typeof sections) =>
+    setSections(p => ({ ...p, [key]: !p[key] }))
 
-  const handleNeedTypeToggle = (needTypeId: string) => {
-    const updatedTypes = filters.needTypes.includes(needTypeId)
-      ? filters.needTypes.filter((t) => t !== needTypeId)
-      : [...filters.needTypes, needTypeId]
+  const update = (patch: Partial<CampaignFilters>) =>
+    onFiltersChange({ ...filters, ...patch, page: 1 })
 
-    onFiltersChange({ ...filters, needTypes: updatedTypes, page: 1 })
-  }
+  const visibleTypes = showAllTypes ? needTypes : needTypes.slice(0, MAX_VISIBLE)
 
-  const handleLocationChange = (location: string) => {
-    onFiltersChange({
-      ...filters,
-      location: location || undefined,
-      page: 1,
-    })
-  }
+  return (
+    <>
+      {/* Need Type */}
+      {needTypes.length > 0 && (
+        <Section>
+          <SectionToggle onClick={() => toggle('needType')}>
+            <SectionLabel>Category</SectionLabel>
+            <ChevronIcon size={14} $open={sections.needType} />
+          </SectionToggle>
+          <SectionContent $visible={sections.needType}>
+            {visibleTypes.map(nt => {
+              const sel = filters.needTypes.includes(nt.id)
+              return (
+                <OptionLabel key={nt.id} $selected={sel}>
+                  <input
+                    type="checkbox"
+                    checked={sel}
+                    onChange={() => {
+                      const next = sel
+                        ? filters.needTypes.filter(t => t !== nt.id)
+                        : [...filters.needTypes, nt.id]
+                      update({ needTypes: next })
+                    }}
+                  />
+                  <OptionDot $selected={sel} $type="check" />
+                  <OptionText>{nt.name}</OptionText>
+                  <OptionCount>{nt.count}</OptionCount>
+                </OptionLabel>
+              )
+            })}
+            {needTypes.length > MAX_VISIBLE && (
+              <ShowMore onClick={() => setShowAllTypes(p => !p)}>
+                {showAllTypes ? '↑ Show less' : `+ ${needTypes.length - MAX_VISIBLE} more`}
+              </ShowMore>
+            )}
+          </SectionContent>
+        </Section>
+      )}
 
-  const handleRadiusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onFiltersChange({
-      ...filters,
-      locationRadius: parseInt(e.target.value) || undefined,
-      page: 1,
-    })
-  }
+      {/* Status */}
+      <Section>
+        <SectionToggle onClick={() => toggle('status')}>
+          <SectionLabel>Status</SectionLabel>
+          <ChevronIcon size={14} $open={sections.status} />
+        </SectionToggle>
+        <SectionContent $visible={sections.status}>
+          {statusOptions.map(opt => {
+            const sel = (filters.status || 'all') === opt.value
+            return (
+              <OptionLabel key={opt.value} $selected={sel}>
+                <input type="radio" checked={sel} onChange={() => update({ status: opt.value as any })} />
+                <OptionDot $selected={sel} $type="radio" />
+                <OptionText>{opt.label}</OptionText>
+              </OptionLabel>
+            )
+          })}
+        </SectionContent>
+      </Section>
 
-  const handleGeographicScopeChange = (scope: string) => {
-    onFiltersChange({
-      ...filters,
-      geographicScope:
-        scope === 'all'
-          ? ('all' as const)
-          : (scope as 'local' | 'regional' | 'national' | 'global'),
-      page: 1,
-    })
-  }
+      {/* Sort */}
+      <Section>
+        <SectionToggle onClick={() => toggle('sort')}>
+          <SectionLabel>Sort by</SectionLabel>
+          <ChevronIcon size={14} $open={sections.sort} />
+        </SectionToggle>
+        <SectionContent $visible={sections.sort}>
+          {sortOptions.map(opt => {
+            const sel = (filters.sortBy || 'trending') === opt.value
+            return (
+              <OptionLabel key={opt.value} $selected={sel}>
+                <input type="radio" checked={sel} onChange={() => update({ sortBy: opt.value as any })} />
+                <OptionDot $selected={sel} $type="radio" />
+                <OptionText>{opt.label}</OptionText>
+              </OptionLabel>
+            )
+          })}
+        </SectionContent>
+      </Section>
 
-  const handleGoalRange = (min: number, max: number) => {
-    onFiltersChange({
-      ...filters,
-      minGoal: min || undefined,
-      maxGoal: max || undefined,
-      page: 1,
-    })
-  }
+      {/* Geographic Scope */}
+      <Section>
+        <SectionToggle onClick={() => toggle('scope')}>
+          <SectionLabel>Scope</SectionLabel>
+          <ChevronIcon size={14} $open={sections.scope} />
+        </SectionToggle>
+        <SectionContent $visible={sections.scope}>
+          {scopeOptions.map(opt => {
+            const sel = (filters.geographicScope || 'all') === opt.value
+            return (
+              <OptionLabel key={opt.value} $selected={sel}>
+                <input type="radio" checked={sel} onChange={() => update({ geographicScope: opt.value as any })} />
+                <OptionDot $selected={sel} $type="radio" />
+                <OptionText style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  {opt.icon} {opt.label}
+                </OptionText>
+              </OptionLabel>
+            )
+          })}
+        </SectionContent>
+      </Section>
 
-  const handleStatusChange = (
-    status: 'all' | 'active' | 'completed' | 'paused'
-  ) => {
-    onFiltersChange({ ...filters, status, page: 1 })
-  }
+      {/* Location */}
+      <Section>
+        <SectionToggle onClick={() => toggle('location')}>
+          <SectionLabel>Location</SectionLabel>
+          <ChevronIcon size={14} $open={sections.location} />
+        </SectionToggle>
+        <SectionContent $visible={sections.location}>
+          <InputGroup>
+            <div>
+              <InputLabel>City or region</InputLabel>
+              <TextInput
+                placeholder="e.g. New York"
+                value={filters.location || ''}
+                onChange={e => update({ location: e.target.value || undefined })}
+              />
+            </div>
+            {filters.location && (
+              <div>
+                <InputLabel>Radius: {filters.locationRadius || 25} km</InputLabel>
+                <input
+                  type="range"
+                  min={5}
+                  max={200}
+                  step={5}
+                  value={filters.locationRadius || 25}
+                  onChange={e => update({ locationRadius: parseInt(e.target.value) })}
+                  style={{ width: '100%', cursor: 'pointer' }}
+                />
+              </div>
+            )}
+          </InputGroup>
+        </SectionContent>
+      </Section>
 
-  const handleSortChange = (
-    sortBy: 'trending' | 'newest' | 'goalAsc' | 'goalDesc' | 'raised'
-  ) => {
-    onFiltersChange({ ...filters, sortBy, page: 1 })
-  }
-
-  // ✅ All filters removed - displaying empty container
-  const content = (
-    <Container>
-      {/* Empty sidebar - no filters */}
-    </Container>
+      {/* Goal Range */}
+      <Section>
+        <SectionToggle onClick={() => toggle('goal')}>
+          <SectionLabel>Goal Range</SectionLabel>
+          <ChevronIcon size={14} $open={sections.goal} />
+        </SectionToggle>
+        <SectionContent $visible={sections.goal}>
+          <InputGroup>
+            <div>
+              <InputLabel>Min ($)</InputLabel>
+              <TextInput
+                type="number"
+                placeholder="0"
+                value={filters.minGoal ? filters.minGoal / 100 : ''}
+                onChange={e => update({ minGoal: e.target.value ? parseInt(e.target.value) * 100 : undefined })}
+              />
+            </div>
+            <div>
+              <InputLabel>Max ($)</InputLabel>
+              <TextInput
+                type="number"
+                placeholder="Any"
+                value={filters.maxGoal && filters.maxGoal < 9999999 * 100 ? filters.maxGoal / 100 : ''}
+                onChange={e => update({ maxGoal: e.target.value ? parseInt(e.target.value) * 100 : undefined })}
+              />
+            </div>
+          </InputGroup>
+        </SectionContent>
+      </Section>
+    </>
   )
+}
+
+// ─── Main component ────────────────────────────────────────────────────────────
+export function FiltersSidebar(props: FiltersSidebarProps) {
+  const { mobile, isOpen, onClose, onReset } = props
 
   if (mobile) {
+    if (!isOpen) return null
     return (
-      <MobileOverlay $isOpen={isOpen}>
-        {/* Backdrop */}
-        <MobileBackdrop onClick={onClose} />
-
-        {/* Sidebar */}
-        <MobileSidebar>
-          {content}
-        </MobileSidebar>
-      </MobileOverlay>
+      <>
+        <Backdrop onClick={onClose} />
+        <Drawer>
+          <DrawerHeader>
+            <DrawerTitle>Filters</DrawerTitle>
+            <CloseBtn onClick={onClose} aria-label="Close filters">
+              <X size={16} />
+            </CloseBtn>
+          </DrawerHeader>
+          <DrawerScroll>
+            <FiltersContent {...props} />
+          </DrawerScroll>
+          <DrawerFooter>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <ResetBtn onClick={onReset} style={{ flex: 1 }}>
+                <RotateCcw size={13} /> Reset
+              </ResetBtn>
+              <ApplyBtn onClick={onClose} style={{ flex: 2 }}>
+                Apply Filters
+              </ApplyBtn>
+            </div>
+          </DrawerFooter>
+        </Drawer>
+      </>
     )
   }
 
-  return <div>{content}</div>
+  return (
+    <Sidebar>
+      <SidebarHead>
+        <SidebarTitle>Filters</SidebarTitle>
+        <ResetBtn onClick={onReset} style={{ width: 'auto', padding: '0 12px', fontSize: '0.75rem' }}>
+          <RotateCcw size={12} /> Reset
+        </ResetBtn>
+      </SidebarHead>
+      <FiltersContent {...props} />
+    </Sidebar>
+  )
 }
